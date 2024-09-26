@@ -1,5 +1,3 @@
-import requests
-
 from Bot.setup_logging import logger
 
 import os
