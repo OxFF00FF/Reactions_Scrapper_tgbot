@@ -22,7 +22,7 @@ def get_user_data() -> dict:
     print(f"\n{YELLOW}👋  Привет. Я бот для получения сообщений из тегерам каналов{WHITE}\n")
 
     result = {}
-    print(f"🤖  Откуда нужно получить сообщения?")
+    print(f"🤖  Откуда получить сообщения?")
     input_channel = input(f'{CYAN}▶️  URL телеграм канала: {WHITE}')
 
     if input_channel.startswith('https://t.me/') or input_channel.startswith('t.me/'):
@@ -34,19 +34,17 @@ def get_user_data() -> dict:
         choice = input(f"{CYAN}▶️  Выберите действие (1/2): {WHITE}")
 
         if choice == '1':
-            print(f"\nℹ️  Укажите диапазон дат в формате:\n"
-                  f"{GREEN}<начальная_дата ДД.ММ.ГГГГ>{WHITE}_{LIGHT_BLUE}<конечная_дата ДД.ММ.ГГГГ>{WHITE}\n\n"
-                  f"Например: {GREEN}01.01.2024{WHITE}_{LIGHT_BLUE}30.01.2024\n")
+            print(f"\n{LIGHT_YELLOW}ℹ️  Укажите диапазон дат в формате: {BOLD}{LIGHT_BLUE}ДД.ММ.ГГГГ{RESET}{WHITE}")
+            print(f"{LIGHT_YELLOW}ℹ️  Например: {BOLD}01.01.2024, 30.01.2024{RESET}{WHITE}\n")
 
-            date_range = input(f"{CYAN}▶️  Диапазон дат: {WHITE}")
-            start_date_str, end_date_str = date_range.split('_')
-
+            start_date = input(f"{CYAN}▶️  Начальная дата: ")
+            end_date = input(f"{CYAN}▶️  Конечная дата:  ")
             try:
-                start_date = datetime.strptime(start_date_str, '%d.%m.%Y')
-                end_date = datetime.strptime(end_date_str, '%d.%m.%Y')
+                start_date = datetime.strptime(start_date, '%d.%m.%Y')
+                end_date = datetime.strptime(end_date, '%d.%m.%Y')
                 end_date = end_date + timedelta(hours=23, minutes=59, seconds=59)
             except Exception as e:
-                print(f"🚫 Неверно указан формат даты: {e}")
+                print(f"\n{LIGHT_RED}🚫 Неверно указан формат даты: {e}")
                 exit(1)
 
             if start_date >= end_date:
