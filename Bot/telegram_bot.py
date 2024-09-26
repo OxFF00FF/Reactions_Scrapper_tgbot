@@ -4,6 +4,7 @@ from Bot.setup_logging import logger
 
 from datetime import datetime
 
+import requests
 from telethon.utils import get_input_peer
 from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
@@ -141,7 +142,7 @@ class EmotionsScrapperTelegramBot:
         line_after(width=20)
         return data, emoji_counts, target_emoji_counts
 
-    def sorting_by_emoji(self, channel_url: str, data: list, emoji_counts: dict, target_emoji_counts: dict, target_emoji='👍', zero_target_emoji=False, show_post_date=True) -> list:
+    def sorting_by_emoji(self, channel_url: str, data: list, emoji_counts: dict, target_emoji_counts: dict, target_emoji='👍', zero_target_emoji=False) -> list:
         print(f"{YELLOW}ℹ️  Сортируем сообщения{WHITE}")
 
         result = []
@@ -171,13 +172,20 @@ class EmotionsScrapperTelegramBot:
             if post_date is None:
                 post_date = "Unknown date"
 
-            emoji_info = f"{YELLOW}{target_emoji}{WHITE}: {BOLD}{LIGHT_CYAN}{target_emoji_count:<3}{RESET}{WHITE} │ " + " / ".join(f"{DARK_GRAY}{emoji}: {count}{WHITE}" for emoji, count in emojis.items())
-            if show_post_date:
-                result.append(f"{e + 1:<3} │ {CYAN}{post_date}{WHITE} │ Пост: {url} · {emoji_info}")
-            else:
-                result.append(f"{e + 1:<3} │ Пост: {url} · {emoji_info}")
+            post_info = {
+                "target_emoji": target_emoji,
+                "target_emoji_count": target_emoji_count,
+                "emoji_counts": {emoji: count for emoji, count in emojis.items()},
+                "post_date": post_date,
+                "url": url
+            }
 
+            emoji_info = f"{YELLOW}{post_info['target_emoji']}{WHITE}: {BOLD}{LIGHT_CYAN}{post_info['target_emoji_count']:<3}{RESET}{WHITE} │ " + \
+                         " / ".join(f"{DARK_GRAY}{emoji}: {count}{WHITE}" for emoji, count in post_info['emoji_counts'].items())
+            formatted_string = f"{e + 1:<3} │ {CYAN}{post_date}{WHITE} │ Пост: {url} · {emoji_info}"
+            post_info["formatted_string"] = formatted_string
 
+            result.append(post_info)
 
         print(f"{GREEN}✅  Готово{WHITE}")
         return result
@@ -205,18 +213,45 @@ class EmotionsScrapperTelegramBot:
 
         data, emoji_counts, target_emoji_counts = self.parse_messages(channel, channel_messages, target_emoji=emoji)
         top_posts = self.sorting_by_emoji(channel, data, emoji_counts, target_emoji_counts,
-                                          target_emoji=emoji, zero_target_emoji=False, show_post_date=False)
+                                          target_emoji=emoji, zero_target_emoji=False)
 
         if top_posts:
             print(f"\n{BOLD}Топ: {LIGHT_CYAN}{len(top_posts)}{WHITE} постов · По количеству эмоджи: {YELLOW}{emoji}{WHITE} · Всего сообщений: {LIGHT_MAGENTA}{len(data)}{RESET}")
             line_before(blank_line=False, width=71)
             for post in top_posts:
-                print(post)
+                print(post['formatted_string'])
             line_after(width=71)
+
+            self.most_popular_post(top_posts, emoji)
 
         else:
             print(f"ℹ️  Не найдено постов с эмоджи: {YELLOW}{emoji}{WHITE} в указанном диапозоне дат или количестве постов")
 
+    def most_popular_post(self, posts, emoji):
+        try:
+            message = f"Самые популярные посты по количеству {emoji}:\n"
+            message += f"1️⃣  {posts[0]['url']} \n" \
+                       f"2️⃣  {posts[1]['url']} \n" \
+                       f"3️⃣  {posts[2]['url']} \n" \
+                       f"4️⃣  {posts[3]['url']} \n" \
+                       f"5️⃣  {posts[4]['url']} \n"
+            text = message.replace('.', '\\.')
+
+
+            url = f"https://api.telegram.org/bot{self.config['bot_token']}/sendMessage"
+            response = requests.post(url, data={
+                "chat_id": self.config['logs_group'],
+                "text": text,
+                "parse_mode": "MarkdownV2",
+                "disable_web_page_preview": True
+            })
+
+            response.raise_for_status()
+            print(f"{message}\nОтправлено в группу")
+
+        except Exception as e:
+            print(response.json())
+            print(f"🚫  Ошибка с телеграм API: {e}")
 
     def run(self):
         try:

@@ -1,3 +1,5 @@
+import requests
+
 from Bot.setup_logging import logger
 
 import os
@@ -19,9 +21,10 @@ def main():
         'api_id': int(os.environ.get('API_ID')),
         'api_hash': str(os.environ.get('API_HASH')),
         'phone': str(os.environ.get('PHONE_NUMBER')),
-        'token': str(os.environ['TELEGRAM_BOT_TOKEN']),
+        'bot_token': str(os.environ['TELEGRAM_BOT_TOKEN']),
         'bot_username': os.environ.get('TELEGRAM_BOT_USERNAME', 'n/a'),
         'chat_id': int(os.environ.get('CHAT_ID')),
+        'logs_group': int(os.environ.get('BOT_LOGS_GROUP_ID'))
     }
 
     if not os.path.exists('sessions'):
