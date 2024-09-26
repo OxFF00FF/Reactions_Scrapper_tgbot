@@ -229,25 +229,22 @@ class EmotionsScrapperTelegramBot:
 
     def most_popular_post(self, posts, emoji):
         try:
-            message = f"Самые популярные посты по количеству {emoji}:\n"
-            message += f"1️⃣  {posts[0]['url']} \n" \
-                       f"2️⃣  {posts[1]['url']} \n" \
-                       f"3️⃣  {posts[2]['url']} \n" \
-                       f"4️⃣  {posts[3]['url']} \n" \
-                       f"5️⃣  {posts[4]['url']} \n"
+            message = f"*Самые популярные посты по количеству* {emoji}:\n\n"
+            for i in range(min(5, len(posts))):
+                message += f"{i + 1}️⃣  [Место]({posts[i]['url']}) · {posts[i]['target_emoji_count']}\n"
             text = message.replace('.', '\\.')
 
 
             url = f"https://api.telegram.org/bot{self.config['bot_token']}/sendMessage"
             response = requests.post(url, data={
-                "chat_id": self.config['logs_group'],
+                "chat_id": self.config['chat_id'],
                 "text": text,
                 "parse_mode": "MarkdownV2",
                 "disable_web_page_preview": True
             })
 
             response.raise_for_status()
-            print(f"{message}\nОтправлено в группу")
+            print(f"{message}\nОтправлено в чат {self.config['chat_id']}")
 
         except Exception as e:
             print(response.json())
