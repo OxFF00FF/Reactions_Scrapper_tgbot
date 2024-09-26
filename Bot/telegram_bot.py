@@ -41,7 +41,7 @@ class EmotionsScrapperTelegramBot:
             logger.error(e)
             exit(1)
 
-        line_before(blank_line=False, width=25)
+        line_before(blank_line=False, width=24)
 
         total_messages = 0
         all_messages = []
@@ -96,7 +96,7 @@ class EmotionsScrapperTelegramBot:
             print(f"🆔  Смещение ID: {offset_id} · Всего сообщений: {total_messages}")
 
         print(f"{YELLOW}ℹ️  Получено сообщений: {total_messages}{WHITE}")
-        line_after(width=25)
+        line_after(width=24)
 
         return all_messages
 
@@ -198,7 +198,8 @@ class EmotionsScrapperTelegramBot:
         data, emoji_counts, target_emoji_counts = self.parse_messages(channel, channel_messages, target_emoji=emoji)
         top_posts = self.sorting_by_emoji(channel, data, emoji_counts, target_emoji_counts, target_emoji=emoji)
 
-        line_before(width=71)
+        print(f"\n{BOLD}Топ: {BOLD}{LIGHT_CYAN}{len(top_posts)}{RESET}{WHITE} постов · По количеству эмоджи: {BOLD}{YELLOW}{emoji}{RESET}{WHITE} · Всего сообщений: {len(data)}{RESET}")
+        line_before(blank_line=False, width=71)
         for post in top_posts:
             print(post)
         line_after(width=71)

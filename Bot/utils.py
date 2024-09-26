@@ -34,8 +34,8 @@ def get_user_data() -> dict:
         choice = input(f"{CYAN}▶️  Выберите действие (1/2): {WHITE}")
 
         if choice == '1':
-            print(f"\n{LIGHT_YELLOW}ℹ️  Укажите диапазон дат в формате: {BOLD}{LIGHT_BLUE}ДД.ММ.ГГГГ{RESET}{WHITE}")
-            print(f"{LIGHT_YELLOW}ℹ️  Например: {BOLD}01.01.2024, 30.01.2024{RESET}{WHITE}\n")
+            print(f"\n{YELLOW}ℹ️  Укажите диапазон дат в формате: {BOLD}{LIGHT_BLUE}ДД.ММ.ГГГГ{RESET}{WHITE}")
+            print(f"{YELLOW}ℹ️  Например: {BOLD}{LIGHT_BLUE}01.01.2024, 30.01.2024{RESET}{WHITE}\n")
 
             start_date = input(f"{CYAN}▶️  Начальная дата: ")
             end_date = input(f"{CYAN}▶️  Конечная дата:  ")
@@ -48,9 +48,9 @@ def get_user_data() -> dict:
                 exit(1)
 
             if start_date >= end_date:
-                print(f"{RED}🚫  Дата начала должна быть меньше даты окончания{WHITE}")
+                print(f"{RED}🚫  Дата начала должна быть меньше конечной даты{WHITE}")
 
-            print(f"{YELLOW}ℹ️  Получаем сообщения за период: {start_date} - {end_date}\n{WHITE}")
+            print(f"\n{YELLOW}ℹ️  Получаем сообщения за период: {BOLD}{LIGHT_BLUE}{start_date} - {end_date}\n{WHITE}")
             result['date_range'] = {'start': start_date, 'end': end_date}
 
         elif choice == '2':
