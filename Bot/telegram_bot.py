@@ -1,4 +1,3 @@
-import time
 import traceback
 
 from Bot.setup_logging import logger
