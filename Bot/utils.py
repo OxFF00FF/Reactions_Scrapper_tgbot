@@ -28,6 +28,13 @@ def get_user_data() -> dict:
     if input_channel.startswith('https://t.me/') or input_channel.startswith('t.me/'):
         result['channel'] = input_channel
 
+        print(f"\n🤖  По какому эмоджи сортировать? (по умолчанию 👍)")
+        choice_emoji = input(f"{CYAN}▶️  Укажите эмоджи (Enter пропустить): ")
+        if choice_emoji == '':
+            result['emoji'] = '👍'
+        else:
+            result['emoji'] = choice_emoji
+
         print(f"\n🤖  Как нужно получить сообщения?\n"
               f"{LIGHT_YELLOW}1 │  {RESET}📅  {YELLOW}Диапазон дат (от начальной до конечной даты) {WHITE}\n"
               f"{LIGHT_YELLOW}2 │  {RESET}🔢  {YELLOW}Количество (от последнего от указанного количества) {WHITE}")

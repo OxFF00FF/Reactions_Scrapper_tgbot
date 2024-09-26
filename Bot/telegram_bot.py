@@ -141,7 +141,7 @@ class EmotionsScrapperTelegramBot:
         line_after(width=20)
         return data, emoji_counts, target_emoji_counts
 
-    def sorting_by_emoji(self, channel_url: str, data: list, emoji_counts: dict, target_emoji_counts: dict, target_emoji='👍') -> list:
+    def sorting_by_emoji(self, channel_url: str, data: list, emoji_counts: dict, target_emoji_counts: dict, target_emoji='👍', zero_target_emoji=False, show_post_date=True) -> list:
         print(f"{YELLOW}ℹ️  Сортируем сообщения{WHITE}")
 
         result = []
@@ -156,6 +156,9 @@ class EmotionsScrapperTelegramBot:
             emojis = emoji_counts.get(url, {})
             target_emoji_count = emojis.pop(target_emoji, 0)
 
+            if not zero_target_emoji and target_emoji_count == 0:
+                continue
+
             post_date = None
             for item in data:
                 if item['_'] == 'Message':
@@ -169,7 +172,12 @@ class EmotionsScrapperTelegramBot:
                 post_date = "Unknown date"
 
             emoji_info = f"{YELLOW}{target_emoji}{WHITE}: {BOLD}{LIGHT_CYAN}{target_emoji_count:<3}{RESET}{WHITE} │ " + " / ".join(f"{DARK_GRAY}{emoji}: {count}{WHITE}" for emoji, count in emojis.items())
-            result.append(f"{e + 1:<3} │ {CYAN}{post_date}{WHITE} │ Пост: {url} · {emoji_info}")
+            if show_post_date:
+                result.append(f"{e + 1:<3} │ {CYAN}{post_date}{WHITE} │ Пост: {url} · {emoji_info}")
+            else:
+                result.append(f"{e + 1:<3} │ Пост: {url} · {emoji_info}")
+
+
 
         print(f"{GREEN}✅  Готово{WHITE}")
         return result
@@ -177,6 +185,7 @@ class EmotionsScrapperTelegramBot:
     async def get_top_posts(self):
         user_input = get_user_data()
         channel = user_input['channel']
+        emoji = user_input['emoji']
 
         if 'date_range' in user_input:
             start = user_input['date_range']['start']
@@ -194,15 +203,20 @@ class EmotionsScrapperTelegramBot:
         except Exception as e:
             logger.error(f"{RED}❌  Не удалось сохранить файл{WHITE}\n{e}")
 
-        emoji = '👍'
         data, emoji_counts, target_emoji_counts = self.parse_messages(channel, channel_messages, target_emoji=emoji)
-        top_posts = self.sorting_by_emoji(channel, data, emoji_counts, target_emoji_counts, target_emoji=emoji)
+        top_posts = self.sorting_by_emoji(channel, data, emoji_counts, target_emoji_counts,
+                                          target_emoji=emoji, zero_target_emoji=False, show_post_date=False)
 
-        print(f"\n{BOLD}Топ: {BOLD}{LIGHT_CYAN}{len(top_posts)}{RESET}{WHITE} постов · По количеству эмоджи: {BOLD}{YELLOW}{emoji}{RESET}{WHITE} · Всего сообщений: {len(data)}{RESET}")
-        line_before(blank_line=False, width=71)
-        for post in top_posts:
-            print(post)
-        line_after(width=71)
+        if top_posts:
+            print(f"\n{BOLD}Топ: {LIGHT_CYAN}{len(top_posts)}{WHITE} постов · По количеству эмоджи: {YELLOW}{emoji}{WHITE} · Всего сообщений: {LIGHT_MAGENTA}{len(data)}{RESET}")
+            line_before(blank_line=False, width=71)
+            for post in top_posts:
+                print(post)
+            line_after(width=71)
+
+        else:
+            print(f"ℹ️  Не найдено постов с эмоджи: {YELLOW}{emoji}{WHITE} в указанном диапозоне дат или количестве постов")
+
 
     def run(self):
         try:
