@@ -1,16 +1,17 @@
+import time
+import traceback
+
 from Bot.setup_logging import logger
 
-import json
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from dotenv import load_dotenv
 from telethon.utils import get_input_peer
 from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
 from telethon.tl.functions.messages import GetHistoryRequest
 from telethon.tl.types import PeerChannel
 
-from Bot.utils import line_before, line_after, DateTimeEncoder, read_file, save_file, get_user_data
+from Bot.utils import line_before, line_after, read_file, save_file, get_user_data, file_path
 from Bot.colors import *
 
 
@@ -20,12 +21,6 @@ class EmotionsScrapperTelegramBot:
         self.config = config
 
     async def get_messages(self, input_channel=None, total_count=1, start_date=None, end_date=None, offset_id=0, limit=100) -> list[dict]:
-        """
-        :param phone_number: Номер телефона в международном формате
-        :param offset_id: С какого ID сообщения начать. по умолчанию с самого последнего
-        :param limit: Сколько сообщений получать за 1 запрос. По умолчанию 100
-        """
-
         try:
             await self.client.start()
 
@@ -40,15 +35,14 @@ class EmotionsScrapperTelegramBot:
                     await self.client.sign_in(password=input('Password: '))
 
             me = await self.client.get_me()
-            print(f"{DARK_GRAY}✅  Вы вошли как {me.first_name} {me.last_name} ({me.username}){WHITE}")
+            print(f"{DARK_GRAY}✅  Вы вошли как {me.first_name} {me.last_name} ({me.username}){WHITE}\n")
 
         except Exception as e:
             print(f"🚫 Не удалось войти в аккаунт")
             logger.error(e)
             exit(1)
 
-        if total_count > limit:
-            line_before()
+        line_before(blank_line=False, width=25)
 
         total_messages = 0
         all_messages = []
@@ -100,23 +94,20 @@ class EmotionsScrapperTelegramBot:
             total_messages = len(all_messages)
             if len(messages) < limit:
                 break
-
             print(f"🆔  Смещение ID: {offset_id} · Всего сообщений: {total_messages}")
 
-        if total_count > limit:
-            line_after()
-
-        # Печать итогового количества сообщений
-        print(f"{YELLOW}ℹ️  Получено сообщений: {total_messages}{WHITE}\n")
+        print(f"{YELLOW}ℹ️  Получено сообщений: {total_messages}{WHITE}")
+        line_after(width=25)
 
         return all_messages
 
-    def parse_messages(self, channel_url: str, messages: list = None) -> list:
-        print(f"{YELLOW}ℹ️  Парсим сообщения{WHITE}\n")
+    def parse_messages(self, channel_url: str, messages: list = None, target_emoji: str = '👍') -> tuple:
+        line_before(width=20)
 
-        result = []
+        print(f"{YELLOW}ℹ️  Парсим сообщения{WHITE}")
+
         emoji_counts = {}
-        thumbs_up_counts = {}
+        target_emoji_counts = {}
 
         if messages:
             data = messages
@@ -126,11 +117,9 @@ class EmotionsScrapperTelegramBot:
         for item in data:
             if item['_'] == 'Message':
                 message_id = item['id']
-                post_url = f"{channel_url}/{message_id}"
+                print(f"\r📨  {message_id}", flush=True, end="")
 
-                iso_date_str = item['date']
-                date_obj = datetime.fromisoformat(iso_date_str)
-                post_date = date_obj.strftime("%d-%m-%Y %H:%M")
+                post_url = f"{channel_url}/{message_id}"
 
                 reactions = item.get('reactions')
                 if reactions:
@@ -146,35 +135,44 @@ class EmotionsScrapperTelegramBot:
                             emoji_counts[post_url][emoji] = 0
 
                         emoji_counts[post_url][emoji] += count
+                        if emoji == target_emoji:
+                            target_emoji_counts[post_url] = target_emoji_counts.get(post_url, 0) + count
 
-                        if emoji == '👍':
-                            thumbs_up_counts[post_url] = thumbs_up_counts.get(post_url, 0) + count
+        print(f"\n{GREEN}✅  Готово{WHITE}")
+        line_after(width=20)
+        return data, emoji_counts, target_emoji_counts
+
+    def sorting_by_emoji(self, channel_url: str, data: list, emoji_counts: dict, target_emoji_counts: dict, target_emoji='👍') -> list:
+        print(f"{YELLOW}ℹ️  Сортируем сообщения{WHITE}")
+
+        result = []
 
         for url in emoji_counts:
-            if url not in thumbs_up_counts:
-                thumbs_up_counts[url] = 0
+            if url not in target_emoji_counts:
+                target_emoji_counts[url] = 0
 
-        sorted_posts = sorted(thumbs_up_counts.items(), key=lambda x: x[1], reverse=True)
+        sorted_posts = sorted(target_emoji_counts.items(), key=lambda x: emoji_counts.get(x[0], {}).get(target_emoji, 0), reverse=True)
 
         for e, (url, _) in enumerate(sorted_posts):
             emojis = emoji_counts.get(url, {})
-            thumbs_up_count = emojis.pop('👍', 0)
+            target_emoji_count = emojis.pop(target_emoji, 0)
 
             post_date = None
             for item in data:
                 if item['_'] == 'Message':
                     message_id = item['id']
                     if f"{channel_url}/{message_id}" == url:
-                        iso_date_str = item['date']
+                        iso_date_str = str(item['date'])
                         date_obj = datetime.fromisoformat(iso_date_str)
                         post_date = date_obj.strftime("%d-%m-%Y %H:%M")
                         break
             if post_date is None:
                 post_date = "Unknown date"
 
-            emoji_info = f"{YELLOW}👍{WHITE}: {GREEN}{thumbs_up_count:<3}{WHITE} | " + " / ".join(f"{DARK_GRAY}{emoji}: {count}{WHITE}" for emoji, count in emojis.items())
-            result.append(f"{e + 1:<3} | {CYAN}{post_date}{WHITE} | {YELLOW}Пост: {url}{WHITE} · {emoji_info}")
+            emoji_info = f"{YELLOW}{target_emoji}{WHITE}: {BOLD}{LIGHT_CYAN}{target_emoji_count:<3}{RESET}{WHITE} │ " + " / ".join(f"{DARK_GRAY}{emoji}: {count}{WHITE}" for emoji, count in emojis.items())
+            result.append(f"{e + 1:<3} │ {CYAN}{post_date}{WHITE} │ Пост: {url} · {emoji_info}")
 
+        print(f"{GREEN}✅  Готово{WHITE}")
         return result
 
     async def get_top_posts(self):
@@ -193,18 +191,26 @@ class EmotionsScrapperTelegramBot:
         # Сохранение полученных сообщений в json файл
         try:
             save_file(channel_messages)
-            print(f"{LIGHT_GREEN}✅  Файл успешно сохранен{WHITE}\n")
+            print(f"{LIGHT_GREEN}✅  Файл успешно сохранен по пути:\n💾  {file_path}{WHITE}")
         except Exception as e:
             logger.error(f"{RED}❌  Не удалось сохранить файл{WHITE}\n{e}")
 
-        # top_posts = self.parse_messages(channel, channel_messages)
-        # for post in top_posts:
-        #     print(post)
+        emoji = '👍'
+        data, emoji_counts, target_emoji_counts = self.parse_messages(channel, channel_messages, target_emoji=emoji)
+        top_posts = self.sorting_by_emoji(channel, data, emoji_counts, target_emoji_counts, target_emoji=emoji)
+
+        line_before(width=71)
+        for post in top_posts:
+            print(post)
+        line_after(width=71)
 
     def run(self):
-        # try:
-        with self.client:
-            self.client.loop.run_until_complete(self.get_top_posts())
+        try:
+            with self.client:
+                self.client.loop.run_until_complete(self.get_top_posts())
 
-        # except ConnectionError as e:
-        #     logger.error(f"{RED}❌  Не удалось получить ответ от телеграм API{WHITE}\n{e}")
+        except ConnectionError as e:
+            logger.error(f"{RED}❌  Не удалось получить ответ от телеграм API{WHITE}\n{e}")
+
+        except Exception as e:
+            logger.error(f"{e}\n{traceback.format_exc()}")

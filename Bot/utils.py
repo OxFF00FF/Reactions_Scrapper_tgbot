@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 import json
 from Bot.colors import *
 
-file_path = 'data/channel_messages.json'
+filename = 'channel_messages.json'
+file_path = os.path.join(os.path.abspath('data'), filename)
 
 
 class DateTimeEncoder(json.JSONEncoder):
@@ -28,8 +29,8 @@ def get_user_data() -> dict:
         result['channel'] = input_channel
 
         print(f"\n🤖  Как нужно получить сообщения?\n"
-              f"{LIGHT_YELLOW}1 |  {RESET}📅  {YELLOW}Диапазон дат (от начальной до конечной даты) {WHITE}\n"
-              f"{LIGHT_YELLOW}2 |  {RESET}🔢  {YELLOW}Количество (от последнего от указанного количества) {WHITE}")
+              f"{LIGHT_YELLOW}1 │  {RESET}📅  {YELLOW}Диапазон дат (от начальной до конечной даты) {WHITE}\n"
+              f"{LIGHT_YELLOW}2 │  {RESET}🔢  {YELLOW}Количество (от последнего от указанного количества) {WHITE}")
         choice = input(f"{CYAN}▶️  Выберите действие (1/2): {WHITE}")
 
         if choice == '1':
@@ -52,7 +53,7 @@ def get_user_data() -> dict:
                 print(f"{RED}🚫  Дата начала должна быть меньше даты окончания{WHITE}")
 
             print(f"{YELLOW}ℹ️  Получаем сообщения за период: {start_date} - {end_date}\n{WHITE}")
-            result['date_dange'] = {'start': start_date, 'end': end_date}
+            result['date_range'] = {'start': start_date, 'end': end_date}
 
         elif choice == '2':
             print(f"\n🤖  Сколько сообщений нужно получить?")
@@ -89,16 +90,16 @@ def read_file():
         return data
 
 
-def line_before(blank_line=True):
-    text = "\n┌" + "─" * 50 + "┐"
+def line_before(blank_line=True, width=50):
+    text = "\n┌" + "─" * width + "┐"
     if blank_line:
         print(text)
     else:
         print(text.strip())
 
 
-def line_after(blank_line=True):
-    text = "└" + "─" * 50 + "┘\n"
+def line_after(blank_line=True, width=50):
+    text = "└" + "─" * width + "┘\n"
     if blank_line:
         print(text)
     else:
