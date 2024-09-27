@@ -1,3 +1,4 @@
+import asyncio
 import traceback
 
 from telethon import TelegramClient, events, functions, types
@@ -14,7 +15,7 @@ class EmotionsScrapperTelegramBot:
     channel = 'https://t.me/gosnomersale'
 
     def __init__(self, config, session_name: str = 'root'):
-        self.client = TelegramClient(f'sessions/client', config['api_id'], config['api_hash']).start()
+        self.client = TelegramClient(f'sessions/{session_name}', config['api_id'], config['api_hash']).start()
         self.bot = TelegramClient(f'sessions/bot', config['api_id'], config['api_hash']).start(bot_token=config['token'])
 
         self.commands = [
@@ -161,7 +162,8 @@ class EmotionsScrapperTelegramBot:
             self.client.add_event_handler(self.top_month_command, events.NewMessage(pattern='/top_month'))
 
             self.client.loop.run_until_complete(self.post_init())
-            self.client.run_until_disconnected()
+
+            asyncio.gather(self.client.run_until_disconnected(), self.bot.run_until_disconnected())
 
         except ConnectionError as e:
             logger.error(f"{RED}❌  Не удалось получить ответ от телеграм API{WHITE}\n{e}")
