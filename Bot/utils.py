@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timedelta
 import json
 from Bot.colors import *
+from Bot.setup_logging import logger
 
 filename = 'channel_messages.json'
 file_path = os.path.join(os.path.abspath('data'), filename)
@@ -18,8 +19,23 @@ class DateTimeEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
+def get_start_end_date(days):
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=days)
+
+    start_date = start_date.strftime('%d.%m.%Y')
+    end_date = end_date.strftime('%d.%m.%Y')
+
+    start_date = datetime.strptime(start_date, '%d.%m.%Y')
+    end_date = datetime.strptime(end_date, '%d.%m.%Y')
+
+    end_date = end_date + timedelta(hours=23, minutes=59, seconds=59)
+    return start_date, end_date
+
+
 def sorting_by_emoji(channel_url: str, data: list, emoji_counts: dict, target_emoji_counts: dict, target_emoji='👍', zero_target_emoji=False) -> list:
-    print(f"{YELLOW}ℹ️  Сортируем сообщения{WHITE}")
+    # print(f"{YELLOW}ℹ️  Сортируем сообщения{WHITE}")
+    logger.info(f"{YELLOW}ℹ️  Сортируем сообщения{WHITE}")
 
     result = []
 
@@ -63,21 +79,23 @@ def sorting_by_emoji(channel_url: str, data: list, emoji_counts: dict, target_em
 
         result.append(post_info)
 
-    print(f"{GREEN}✅  Готово{WHITE}")
+    logger.info(f"{GREEN}✅  Готово{WHITE}")
     return result
 
 
 def most_popular_posts(posts, emoji: str = '👍') -> str:
     message = f"**Самые популярные посты по количеству** {emoji}:\n\n"
     for i in range(min(5, len(posts))):
-        message += f"{i + 1}️ [Место]({posts[i]['url']}) · {posts[i]['target_emoji_count']}\n"
+        message += f"{i + 1}️⃣  [Место]({posts[i]['url']}) · {posts[i]['target_emoji_count']}\n" \
+                   f"{posts[i]['url']}\n\n"
     return message
 
 
 def parse_messages(channel_url: str, messages: list, target_emoji: str = '👍') -> tuple:
-    line_before(width=20)
+    # line_before(width=20)
 
-    print(f"{YELLOW}ℹ️  Парсим сообщения{WHITE}")
+    # print(f"{YELLOW}ℹ️  Парсим сообщения{WHITE}")
+    logger.info(f"{YELLOW}ℹ️  Парсим сообщения{WHITE}")
 
     emoji_counts = {}
     target_emoji_counts = {}
@@ -90,10 +108,10 @@ def parse_messages(channel_url: str, messages: list, target_emoji: str = '👍')
     for item in data:
         if item['_'] == 'Message':
             message_id = item['id']
-            print(f"\r📨  {message_id}", flush=True, end="")
+            # print(f"\r📨  {message_id}", flush=True, end="")
+            # logger.info(f"📨  {message_id}")
 
             post_url = f"{channel_url}/{message_id}"
-
             reactions = item.get('reactions')
             if reactions:
                 results = reactions.get('results')
@@ -111,8 +129,8 @@ def parse_messages(channel_url: str, messages: list, target_emoji: str = '👍')
                     if emoji == target_emoji:
                         target_emoji_counts[post_url] = target_emoji_counts.get(post_url, 0) + count
 
-    print(f"\n{GREEN}✅  Готово{WHITE}")
-    line_after(width=20)
+    logger.info(f"{GREEN}✅  Готово{WHITE}")
+    # line_after(width=20)
     return data, emoji_counts, target_emoji_counts
 
 
