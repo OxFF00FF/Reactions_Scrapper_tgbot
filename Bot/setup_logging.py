@@ -56,7 +56,7 @@ def set_logger(log_name: str = 'app', log_file: str = 'logs.log'):
             record.asctime = self.formatTime(record)
             log_message = f"{asctime}{record.asctime}{WHITE} - " \
                           f"{name}{record.name}{WHITE} - " \
-                          f"{level}{BOLD}{record.levelname.ljust(8)}{RESET}{WHITE} |  " \
+                          f"{level}{BOLD}{record.levelname}{RESET}{WHITE} |  " \
                           f"{record.getMessage()}  |{WHITE} " \
                           f"{filename}{record.filename} · " \
                           f"{funcname}{record.funcName}() · " \
