@@ -1,10 +1,9 @@
-import asyncio
-
 from Bot.setup_logging import logger
 
 import os
 from Bot.telegram_bot import EmotionsScrapperTelegramBot
 from dotenv import load_dotenv
+from Bot.colors import *
 
 
 def main():
@@ -21,7 +20,7 @@ def main():
         'api_id': int(os.environ.get('API_ID')),
         'api_hash': str(os.environ.get('API_HASH')),
         'phone': str(os.environ.get('PHONE_NUMBER')),
-        'bot_token': str(os.environ['TELEGRAM_BOT_TOKEN']),
+        'token': str(os.environ['TELEGRAM_BOT_TOKEN']),
         'bot_username': os.environ.get('TELEGRAM_BOT_USERNAME', 'n/a'),
         'chat_id': int(os.environ.get('CHAT_ID')),
         'logs_group': int(os.environ.get('BOT_LOGS_GROUP_ID'))
@@ -31,6 +30,8 @@ def main():
         os.makedirs('sessions')
 
     telegram_bot = EmotionsScrapperTelegramBot(config=telegram_config)
+
+    logger.info(f"{LIGHT_BLUE}Bot started As `{telegram_config['bot_username'].capitalize()}` · https://t.me/{telegram_config['bot_username'].capitalize()}{WHITE}")
     telegram_bot.run()
 
 
