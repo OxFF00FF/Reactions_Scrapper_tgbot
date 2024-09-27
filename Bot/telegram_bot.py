@@ -1,8 +1,8 @@
 import traceback
 
-from telethon import TelegramClient, events
+from telethon import TelegramClient, events, functions, types
 from telethon.tl.functions.messages import GetHistoryRequest
-from telethon.tl.types import PeerChannel
+from telethon.tl.types import PeerChannel, BotCommand
 from telethon.utils import get_input_peer
 
 from Bot.colors import *
@@ -14,13 +14,25 @@ class EmotionsScrapperTelegramBot:
     channel = 'https://t.me/gosnomersale'
 
     def __init__(self, config, session_name: str = 'root'):
-        self.client = TelegramClient(f'sessions/{session_name}', config['api_id'], config['api_hash']).start()
+        self.client = TelegramClient(f'sessions/client', config['api_id'], config['api_hash']).start()
+        self.bot = TelegramClient(f'sessions/bot', config['api_id'], config['api_hash']).start(bot_token=config['token'])
+
+        self.commands = [
+            BotCommand(command='start', description='Запустить бота'),
+            BotCommand(command='help', description='Получить справку'),
+            BotCommand(command='top_week', description='Топ сообений за неделю'),
+            BotCommand(command='top_month', description='Топ сообений за месяц')
+        ]
 
         self.session_name = session_name
         self.config = config
 
     async def save_message(self, event: events.NewMessage.Event):
-        user_id = event.message.from_id.user_id
+        try:
+            user_id = event.message.from_id.user_id
+        except:
+            user_id = event.message.peer_id.user_id
+
         sender = await event.get_sender()
         user_name = sender.first_name if sender else 'Unknown'
         user_last_name = sender.last_name if sender else 'Unknown'
@@ -42,12 +54,15 @@ class EmotionsScrapperTelegramBot:
         )
 
     async def top_week_command(self, event: events.NewMessage.Event):
-        user_id = event.message.from_id.user_id
+        try:
+            user_id = event.message.from_id.user_id
+        except:
+            user_id = event.message.peer_id.user_id
 
         start_date, end_date = get_start_end_date(7)
         logger.info(f"{YELLOW}ℹ️  Получаем сообщения за период: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
 
-        channel_messages = await self.get_messages(self.channel, 10, start_date=start_date, end_date=end_date)
+        channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
 
         data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages)
         top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts, zero_target_emoji=False)
@@ -57,12 +72,15 @@ class EmotionsScrapperTelegramBot:
         logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
 
     async def top_month_command(self, event: events):
-        user_id = event.message.from_id.user_id
+        try:
+            user_id = event.message.from_id.user_id
+        except:
+            user_id = event.message.peer_id.user_id
 
         start_date, end_date = get_start_end_date(30)
         logger.info(f"{YELLOW}ℹ️  Получаем сообщения за период: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
 
-        channel_messages = await self.get_messages(self.channel, 10, start_date=start_date, end_date=end_date)
+        channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
 
         data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages)
         top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts, zero_target_emoji=False)
@@ -127,6 +145,12 @@ class EmotionsScrapperTelegramBot:
         logger.info(f"{YELLOW}ℹ️  Получено сообщений: {total_messages}{WHITE}")
         return all_messages
 
+    async def post_init(self) -> None:
+        """
+        Post initialization hook for the bot.
+        """
+        await self.client(functions.bots.SetBotCommandsRequest(types.BotCommandScopeDefault(), lang_code='ru', commands=self.commands))
+
     def run(self):
         try:
             self.client.add_event_handler(self.save_message, events.NewMessage())
@@ -136,6 +160,7 @@ class EmotionsScrapperTelegramBot:
             self.client.add_event_handler(self.top_week_command, events.NewMessage(pattern='/top_week'))
             self.client.add_event_handler(self.top_month_command, events.NewMessage(pattern='/top_month'))
 
+            self.client.loop.run_until_complete(self.post_init())
             self.client.run_until_disconnected()
 
         except ConnectionError as e:

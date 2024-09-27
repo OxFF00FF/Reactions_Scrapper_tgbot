@@ -34,6 +34,8 @@ def main():
     logger.info(f"{LIGHT_BLUE}Bot started As `{telegram_config['bot_username'].capitalize()}` · https://t.me/{telegram_config['bot_username'].capitalize()}{WHITE}")
     telegram_bot.run()
 
+    # logger.info(f"{LIGHT_BLUE}Client started As {me.first_name} {me.last_name} ({me.username}) · {me.user_id} {WHITE}")
+
 
 if __name__ == "__main__":
     main()
