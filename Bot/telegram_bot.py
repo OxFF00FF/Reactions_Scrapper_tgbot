@@ -235,7 +235,7 @@ class EmotionsScrapperTelegramBot:
             text = message.replace('.', '\\.')
 
 
-            url = f"https://api.telegram.org/bot{self.config['bot_token']}/sendMessage"
+            url = f"https://api.telegram.org/bot{self.config['logs_group']}/sendMessage"
             response = requests.post(url, data={
                 "chat_id": self.config['chat_id'],
                 "text": text,
