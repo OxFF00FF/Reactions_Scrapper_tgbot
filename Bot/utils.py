@@ -18,6 +18,104 @@ class DateTimeEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
+def sorting_by_emoji(channel_url: str, data: list, emoji_counts: dict, target_emoji_counts: dict, target_emoji='👍', zero_target_emoji=False) -> list:
+    print(f"{YELLOW}ℹ️  Сортируем сообщения{WHITE}")
+
+    result = []
+
+    for url in emoji_counts:
+        if url not in target_emoji_counts:
+            target_emoji_counts[url] = 0
+
+    sorted_posts = sorted(target_emoji_counts.items(), key=lambda x: emoji_counts.get(x[0], {}).get(target_emoji, 0), reverse=True)
+
+    for e, (url, _) in enumerate(sorted_posts):
+        emojis = emoji_counts.get(url, {})
+        target_emoji_count = emojis.pop(target_emoji, 0)
+
+        if not zero_target_emoji and target_emoji_count == 0:
+            continue
+
+        post_date = None
+        for item in data:
+            if item['_'] == 'Message' and '#' not in item['message']:
+                message_id = item['id']
+                if f"{channel_url}/{message_id}" == url:
+                    iso_date_str = str(item['date'])
+                    date_obj = datetime.fromisoformat(iso_date_str)
+                    post_date = date_obj.strftime("%d-%m-%Y %H:%M")
+                    break
+        if post_date is None:
+            post_date = "Unknown date"
+
+        post_info = {
+            "target_emoji": target_emoji,
+            "target_emoji_count": target_emoji_count,
+            "emoji_counts": {emoji: count for emoji, count in emojis.items()},
+            "post_date": post_date,
+            "url": url
+        }
+
+        emoji_info = f"{YELLOW}{post_info['target_emoji']}{WHITE}: {BOLD}{LIGHT_CYAN}{post_info['target_emoji_count']:<3}{RESET}{WHITE} │ " + \
+                     " / ".join(f"{DARK_GRAY}{emoji}: {count}{WHITE}" for emoji, count in post_info['emoji_counts'].items())
+        formatted_string = f"{e + 1:<3} │ {CYAN}{post_date}{WHITE} │ Пост: {url} · {emoji_info}"
+        post_info["formatted_string"] = formatted_string
+
+        result.append(post_info)
+
+    print(f"{GREEN}✅  Готово{WHITE}")
+    return result
+
+
+def most_popular_posts(posts, emoji: str = '👍') -> str:
+    message = f"**Самые популярные посты по количеству** {emoji}:\n\n"
+    for i in range(min(5, len(posts))):
+        message += f"{i + 1}️ [Место]({posts[i]['url']}) · {posts[i]['target_emoji_count']}\n"
+    return message
+
+
+def parse_messages(channel_url: str, messages: list, target_emoji: str = '👍') -> tuple:
+    line_before(width=20)
+
+    print(f"{YELLOW}ℹ️  Парсим сообщения{WHITE}")
+
+    emoji_counts = {}
+    target_emoji_counts = {}
+
+    if messages:
+        data = messages
+    else:
+        data = read_file()
+
+    for item in data:
+        if item['_'] == 'Message':
+            message_id = item['id']
+            print(f"\r📨  {message_id}", flush=True, end="")
+
+            post_url = f"{channel_url}/{message_id}"
+
+            reactions = item.get('reactions')
+            if reactions:
+                results = reactions.get('results')
+                for reaction in results:
+                    emoji = reaction['reaction']['emoticon']
+                    count = reaction['count']
+
+                    if post_url not in emoji_counts:
+                        emoji_counts[post_url] = {}
+
+                    if emoji not in emoji_counts[post_url]:
+                        emoji_counts[post_url][emoji] = 0
+
+                    emoji_counts[post_url][emoji] += count
+                    if emoji == target_emoji:
+                        target_emoji_counts[post_url] = target_emoji_counts.get(post_url, 0) + count
+
+    print(f"\n{GREEN}✅  Готово{WHITE}")
+    line_after(width=20)
+    return data, emoji_counts, target_emoji_counts
+
+
 def get_user_data() -> dict:
     print(f"\n{YELLOW}👋  Привет. Я бот для получения сообщений из тегерам каналов{WHITE}\n")
 

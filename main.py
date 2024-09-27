@@ -1,3 +1,5 @@
+import asyncio
+
 from Bot.setup_logging import logger
 
 import os
@@ -29,7 +31,6 @@ def main():
         os.makedirs('sessions')
 
     telegram_bot = EmotionsScrapperTelegramBot(config=telegram_config)
-    # logger.info(f"Bot started As `{telegram_config['bot_username'].capitalize()}` · https://t.me/{telegram_config['bot_username'].capitalize()}")
     telegram_bot.run()
 
 
