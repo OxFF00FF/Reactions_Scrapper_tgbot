@@ -46,7 +46,7 @@ class EmotionsScrapperTelegramBot:
             logger.info(f"📩  ADD new message: {LIGHT_YELLOW}`{message_text}`{WHITE} FROM user: {user_name} {user_last_name} · {user_id}")
 
     async def start_command(self, event: events.NewMessage.Event):
-        await event.reply("Привет! Я ваш бот. Чем могу помочь?")
+        await event.reply("Привет! . Чем могу помочь?")
 
     async def help_command(self, event: events.NewMessage.Event):
         await event.reply(
@@ -65,7 +65,7 @@ class EmotionsScrapperTelegramBot:
 
         loading_message = await self.bot.send_message(entity=user_id, message='⏳')
 
-        def _execute():
+        async def _execute():
             start_date, end_date = get_start_end_date(7)
             logger.info(f"{YELLOW}ℹ️  Getting messages for a period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
 
@@ -74,15 +74,15 @@ class EmotionsScrapperTelegramBot:
             data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages)
             top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts, zero_target_emoji=False)
 
-            text = f'Топ сообщений за неделю\n{most_popular_posts(top_posts)}'
-            await event.reply(text, link_preview=False)
-        _execute()
+            result = f'Топ сообщений за неделю\n{most_popular_posts(top_posts)}'
+            await event.reply(result, link_preview=False)
+            return result
+        text = await _execute()
 
         await self.bot.delete_messages(entity=user_id, message_ids=loading_message.id)
 
         if event.is_private:
             logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
-
 
     async def top_month_command(self, event: events):
         try:
@@ -91,7 +91,7 @@ class EmotionsScrapperTelegramBot:
             user_id = event.message.peer_id.user_id
 
         start_date, end_date = get_start_end_date(30)
-        logger.info(f"{YELLOW}ℹ️  Getting messages for a period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
+        logger.info(f"{YELLOW}ℹ️  Getting messages for period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
 
         channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
 
@@ -156,8 +156,8 @@ class EmotionsScrapperTelegramBot:
             if len(messages) < limit:
                 break
             print(f"\r🆔  Смещение ID: {offset_id} · Всего сообщений: {total_messages}", end="", flush=True)
-            print()
 
+        print()
         logger.info(f"{YELLOW}ℹ️  Получено сообщений: {total_messages}{WHITE}")
         return all_messages
 
@@ -166,7 +166,7 @@ class EmotionsScrapperTelegramBot:
         Post initialization hook for the bot.
         """
         bot = await self.bot.get_me()
-        logger.info(f"{LIGHT_BLUE}Bot started as {WHITE}{bot.first_name.capitalize()}{LIGHT_BLUE}` · https://t.me/{bot.username}{WHITE}")
+        logger.info(f"{LIGHT_BLUE}Bot started as `{WHITE}{bot.first_name.capitalize()}{LIGHT_BLUE}` · https://t.me/{bot.username}{WHITE}")
 
         me = await self.client.get_me()
         logger.info(f"{LIGHT_BLUE}Client started as `{WHITE}{me.first_name} {me.last_name}{LIGHT_BLUE}` ({me.username}) · {me.id} {WHITE}")

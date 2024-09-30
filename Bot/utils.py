@@ -53,13 +53,18 @@ def sorting_by_emoji(channel_url: str, data: list, emoji_counts: dict, target_em
 
         post_date = None
         for item in data:
-            if item['_'] == 'Message' and '#' not in item['message']:
+            if item['_'] == 'Message':
+                print('-----')
+                print(item['message'].replace('\n', ''))
+                print('-----')
+
                 message_id = item['id']
                 if f"{channel_url}/{message_id}" == url:
                     iso_date_str = str(item['date'])
                     date_obj = datetime.fromisoformat(iso_date_str)
                     post_date = date_obj.strftime("%d-%m-%Y %H:%M")
                     break
+
         if post_date is None:
             post_date = "Unknown date"
 
@@ -83,30 +88,25 @@ def sorting_by_emoji(channel_url: str, data: list, emoji_counts: dict, target_em
 
 
 def most_popular_posts(posts, emoji: str = '👍', top_count=5) -> str:
-    message = f"**Самые популярные посты по количеству** {emoji}:\n\n"
+    message = f"**По количеству** {emoji}\n\n"
     for i in range(min(top_count, len(posts))):
         message += f"{i + 1}️⃣  [Место]({posts[i]['url']}) · {posts[i]['target_emoji_count']}\n"
     return message
 
 
 def parse_messages(channel_url: str, messages: list, target_emoji: str = '👍') -> tuple:
-    # line_before(width=20)
-
     logger.info(f"{YELLOW}ℹ️  Parse messages{WHITE}")
 
     emoji_counts = {}
     target_emoji_counts = {}
+    result = []
 
     if messages:
         data = messages
-    else:
-        data = read_file()
 
     for item in data:
         if item['_'] == 'Message':
             message_id = item['id']
-            # print(f"\r📨  {message_id}", flush=True, end="")
-            # logger.info(f"📨  {message_id}")
 
             post_url = f"{channel_url}/{message_id}"
             reactions = item.get('reactions')
@@ -126,9 +126,10 @@ def parse_messages(channel_url: str, messages: list, target_emoji: str = '👍')
                     if emoji == target_emoji:
                         target_emoji_counts[post_url] = target_emoji_counts.get(post_url, 0) + count
 
+            result.append(item)
+
     logger.info(f"{GREEN}✅  Готово{WHITE}")
-    # line_after(width=20)
-    return data, emoji_counts, target_emoji_counts
+    return result, emoji_counts, target_emoji_counts
 
 
 def get_user_data() -> dict:
