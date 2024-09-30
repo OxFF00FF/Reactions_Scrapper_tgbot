@@ -1,4 +1,5 @@
 import asyncio
+import sys
 import traceback
 
 from telethon import TelegramClient, events, functions, types
@@ -14,15 +15,17 @@ from Bot.utils import parse_messages, most_popular_posts, sorting_by_emoji, get_
 class EmotionsScrapperTelegramBot:
     channel = 'https://t.me/gosnomersale'
 
-    def __init__(self, config, session_name: str = 'root'):
+    def __init__(self, config, session_name: str = 'client'):
+        # Init Bot and Client
         self.client = TelegramClient(f'sessions/{session_name}', config['api_id'], config['api_hash']).start()
         self.bot = TelegramClient(f'sessions/bot', config['api_id'], config['api_hash']).start(bot_token=config['token'])
 
+        # Set bot commands
         self.commands = [
             BotCommand(command='start', description='Запустить бота'),
             BotCommand(command='help', description='Получить справку'),
-            BotCommand(command='top_week', description='Топ сообений за неделю'),
-            BotCommand(command='top_month', description='Топ сообений за месяц')
+            BotCommand(command='top_week', description='Топ сообщений за неделю'),
+            BotCommand(command='top_month', description='Топ сообщений за месяц')
         ]
 
         self.session_name = session_name
@@ -70,7 +73,9 @@ class EmotionsScrapperTelegramBot:
 
         text = f'Топ сообщений за неделю\n{most_popular_posts(top_posts)}'
         await event.reply(text, link_preview=False)
-        logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
+
+        if event.is_private:
+            logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
 
     async def top_month_command(self, event: events):
         try:
@@ -88,7 +93,9 @@ class EmotionsScrapperTelegramBot:
 
         text = f'Топ сообщений за месяц\n{most_popular_posts(top_posts)}'
         await event.reply(text, link_preview=False)
-        logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
+
+        if event.is_private:
+            logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
 
     async def get_messages(self, input_channel=None, total_count=None, start_date=None, end_date=None, offset_id=0, limit=100) -> list[dict]:
         total_messages = 0
@@ -150,10 +157,28 @@ class EmotionsScrapperTelegramBot:
         """
         Post initialization hook for the bot.
         """
-        await self.client(functions.bots.SetBotCommandsRequest(types.BotCommandScopeDefault(), lang_code='ru', commands=self.commands))
+        bot = await self.bot.get_me()
+        logger.info(f"{LIGHT_BLUE}Bot started as {WHITE}{bot.first_name.capitalize()}{LIGHT_BLUE}` · https://t.me/{bot.username}{WHITE}")
+
+        me = await self.client.get_me()
+        logger.info(f"{LIGHT_BLUE}Client started as `{WHITE}{me.first_name} {me.last_name}{LIGHT_BLUE}` ({me.username}) · {me.id} {WHITE}")
+
+        # Add commands to bot commands list
+        await self.bot(functions.bots.SetBotCommandsRequest(types.BotCommandScopeDefault(), lang_code='ru', commands=self.commands))
 
     def run(self):
         try:
+            """
+            Runs the bot indefinitely until the user presses Ctrl+C
+            """
+
+            # === BOT handlers === #
+            self.bot.add_event_handler(self.save_message, events.NewMessage())
+
+
+            # === CLIENT handlers === #
+
+            # Message handlers
             self.client.add_event_handler(self.save_message, events.NewMessage())
 
             self.client.add_event_handler(self.start_command, events.NewMessage(pattern='/start'))
@@ -163,6 +188,7 @@ class EmotionsScrapperTelegramBot:
 
             self.client.loop.run_until_complete(self.post_init())
 
+            # Starting async tasks Client and Bot
             asyncio.gather(self.client.run_until_disconnected(), self.bot.run_until_disconnected())
 
         except ConnectionError as e:
@@ -174,4 +200,5 @@ class EmotionsScrapperTelegramBot:
             exit(1)
 
         except KeyboardInterrupt:
-            logger.info("Application stopped...")
+            logger.warning("Application stopped...")
+            sys.exit(0)

@@ -7,6 +7,8 @@ from Bot.colors import *
 
 
 def main():
+    logger.warning("Application starting...")
+
     # Read .env file
     load_dotenv()
     required_values = ['API_ID', 'API_HASH']
@@ -30,11 +32,7 @@ def main():
         os.makedirs('sessions')
 
     telegram_bot = EmotionsScrapperTelegramBot(config=telegram_config)
-
-    logger.info(f"{LIGHT_BLUE}Bot started As `{telegram_config['bot_username'].capitalize()}` · https://t.me/{telegram_config['bot_username'].capitalize()}{WHITE}")
     telegram_bot.run()
-
-    # logger.info(f"{LIGHT_BLUE}Client started As {me.first_name} {me.last_name} ({me.username}) · {me.user_id} {WHITE}")
 
 
 if __name__ == "__main__":
