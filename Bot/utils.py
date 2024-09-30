@@ -52,18 +52,20 @@ def sorting_by_emoji(channel_url: str, data: list, emoji_counts: dict, target_em
             continue
 
         post_date = None
+        post_message = None
+
         for item in data:
             if item['_'] == 'Message':
-                print('-----')
-                print(item['message'].replace('\n', ''))
-                print('-----')
-
                 message_id = item['id']
                 if f"{channel_url}/{message_id}" == url:
+                    post_message = item['message']
                     iso_date_str = str(item['date'])
                     date_obj = datetime.fromisoformat(iso_date_str)
                     post_date = date_obj.strftime("%d-%m-%Y %H:%M")
                     break
+
+        if post_message and post_message.startswith('⚡️'):
+            continue
 
         if post_date is None:
             post_date = "Unknown date"
@@ -83,7 +85,7 @@ def sorting_by_emoji(channel_url: str, data: list, emoji_counts: dict, target_em
 
         result.append(post_info)
 
-    logger.info(f"{GREEN}✅  Готово{WHITE}")
+    logger.info(f"{GREEN}✅  Done{WHITE}")
     return result
 
 
@@ -128,7 +130,7 @@ def parse_messages(channel_url: str, messages: list, target_emoji: str = '👍')
 
             result.append(item)
 
-    logger.info(f"{GREEN}✅  Готово{WHITE}")
+    logger.info(f"{GREEN}✅  Done{WHITE}")
     return result, emoji_counts, target_emoji_counts
 
 
