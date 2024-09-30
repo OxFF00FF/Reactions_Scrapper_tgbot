@@ -9,7 +9,7 @@ from telethon.utils import get_input_peer
 
 from Bot.colors import *
 from Bot.setup_logging import logger
-from Bot.utils import parse_messages, most_popular_posts, sorting_by_emoji, get_start_end_date, save_file, file_path, get_user_data, line_before, line_after
+from Bot.utils import parse_messages, most_popular_posts, sorting_by_emoji, get_start_end_date, save_file, file_path, get_user_data, line_before, line_after, is_allowed
 
 
 class EmotionsScrapperTelegramBot:
@@ -35,6 +35,10 @@ class EmotionsScrapperTelegramBot:
     # ===== UTILS ===== #
     async def save_message(self, event: events.NewMessage.Event):
         sender = await event.get_sender()
+        if not await is_allowed(self.config, sender, log=False):
+            await self.send_disallowed_message(event)
+            return
+
         user_id = sender.id
         user_name = sender.first_name if sender else 'Unknown'
         user_last_name = sender.last_name if sender else 'Unknown'
@@ -118,11 +122,21 @@ class EmotionsScrapperTelegramBot:
 
     # ===== COMMANDS ===== #
     async def start_command(self, event: events.NewMessage.Event):
+        sender = await event.get_sender()
+        if not await is_allowed(self.config, sender):
+            await self.send_disallowed_message(event)
+            return
+
         text = f"👋  Привет. Я бот для получения сообщений из тегерам каналов\n\n" \
                f"Список доступных команд:  /help"
         await event.reply(text)
 
     async def help_command(self, event: events.NewMessage.Event):
+        sender = await event.get_sender()
+        if not await is_allowed(self.config, sender):
+            await self.send_disallowed_message(event)
+            return
+
         await event.reply(
             "⚙️  Доступные команды: \n\n"
             "·  /start - Приветсвтенное сообщение \n"
@@ -144,6 +158,10 @@ class EmotionsScrapperTelegramBot:
 
     async def top_week_command(self, event: events.NewMessage.Event):
         sender = await event.get_sender()
+        if not await is_allowed(self.config, sender):
+            await self.send_disallowed_message(event)
+            return
+
         user_id = sender.id
 
         loading_message = await self.bot.send_message(entity=user_id, message='⏳')
@@ -169,6 +187,10 @@ class EmotionsScrapperTelegramBot:
 
     async def top_month_command(self, event: events.NewMessage.Event):
         sender = await event.get_sender()
+        if not await is_allowed(self.config, sender):
+            await self.send_disallowed_message(event)
+            return
+
         user_id = sender.id
 
         loading_message = await self.bot.send_message(entity=user_id, message='⏳')
@@ -193,6 +215,10 @@ class EmotionsScrapperTelegramBot:
 
     async def top_for_command(self, event: events.NewMessage.Event):
         sender = await event.get_sender()
+        if not await is_allowed(self.config, sender):
+            await self.send_disallowed_message(event)
+            return
+
         user_id = sender.id
 
         loading_message = await self.bot.send_message(entity=user_id, message='⏳')
@@ -283,6 +309,12 @@ class EmotionsScrapperTelegramBot:
 
         else:
             print(f"ℹ️  Не найдено постов с эмоджи: {YELLOW}{emoji}{WHITE} в указанном диапозоне дат или количестве")
+
+    async def send_disallowed_message(self, event: events.NewMessage.Event):
+        """
+        Sends the disallowed message to the user.
+        """
+        await event.reply("🚫  Извините, вам не разрешено использовать этого бота", link_preview=False)
 
     def run(self):
         try:

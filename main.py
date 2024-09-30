@@ -31,11 +31,11 @@ def main(console=False):
 
     telegram_bot = EmotionsScrapperTelegramBot(config=telegram_config)
 
-    if console:
-        telegram_bot.run_console()
-    else:
-        telegram_bot.run()
+    # if console:
+    #     telegram_bot.run_console()
+    # else:
+    telegram_bot.run()
 
 
 if __name__ == "__main__":
-    main(console=True)
+    main()

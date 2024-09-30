@@ -225,3 +225,46 @@ def line_after(blank_line=True, width=50):
         print(text)
     else:
         print(text.strip())
+
+
+def is_admin(config, user_id: int, log_no_admin=False) -> bool:
+    """
+    Checks if user is the admin of bot.
+    The first user in user list is admin.
+    """
+    if config['admin_user_ids'] == '-':
+        if log_no_admin:
+            logger.info('No admin user defined.')
+        return False
+
+    admin_user_ids = config['admin_user_ids'].split(',')
+
+    # Check if user is in the admin user list
+    if str(user_id) in admin_user_ids:
+        return True
+
+    return False
+
+
+async def is_allowed(config, sender, log=True) -> bool:
+    """
+    Checks if the user is allowed to use bot.
+    """
+    user_id = sender.id
+    user_name = sender.first_name if sender else 'Unknown'
+    user_last_name = sender.last_name if sender else 'Unknown'
+
+    if config['allowed_user_ids'] == '*':
+        return True
+
+    if is_admin(config, user_id):
+        return True
+
+    # Check if user is allowed
+    allowed_user_ids = config['allowed_user_ids'].split(',')
+    if str(user_id) in allowed_user_ids:
+        return True
+
+    if log:
+        logger.warning(f'Messages FROM user: {user_name} {user_last_name} · {user_id} are not allowed')
+    return False
