@@ -19,7 +19,7 @@ class DateTimeEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-def get_start_end_date(days):
+def get_start_end_date(days: int) -> tuple[datetime, datetime]:
     end_date = datetime.now()
     start_date = end_date - timedelta(days=days)
 
