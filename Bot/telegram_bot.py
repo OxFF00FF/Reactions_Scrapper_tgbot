@@ -33,14 +33,8 @@ class EmotionsScrapperTelegramBot:
         self.config = config
 
     async def save_message(self, event: events.NewMessage.Event):
-        try:
-            user_id = event.message.from_id.user_id
-        except:
-            user_id = event.message.peer_id.user_id
-        finally:
-            user_id = 'n/a'
-
         sender = await event.get_sender()
+        user_id = sender.id
         user_name = sender.first_name if sender else 'Unknown'
         user_last_name = sender.last_name if sender else 'Unknown'
         message_text = event.message.message
@@ -74,10 +68,8 @@ class EmotionsScrapperTelegramBot:
         )
 
     async def top_week_command(self, event: events.NewMessage.Event):
-        try:
-            user_id = event.message.from_id.user_id
-        except:
-            user_id = event.message.peer_id.user_id
+        sender = await event.get_sender()
+        user_id = sender.id
 
         loading_message = await self.bot.send_message(entity=user_id, message='⏳')
 
@@ -101,10 +93,8 @@ class EmotionsScrapperTelegramBot:
             logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
 
     async def top_month_command(self, event: events.NewMessage.Event):
-        try:
-            user_id = event.message.from_id.user_id
-        except:
-            user_id = event.message.peer_id.user_id
+        sender = await event.get_sender()
+        user_id = sender.id
 
         loading_message = await self.bot.send_message(entity=user_id, message='⏳')
 
@@ -127,10 +117,8 @@ class EmotionsScrapperTelegramBot:
             logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
 
     async def top_for_days_emoji(self, event: events.NewMessage.Event):
-        try:
-            user_id = event.message.from_id.user_id
-        except:
-            user_id = event.message.peer_id.user_id
+        sender = await event.get_sender()
+        user_id = sender.id
 
         loading_message = await self.bot.send_message(entity=user_id, message='⏳')
 
@@ -174,9 +162,6 @@ class EmotionsScrapperTelegramBot:
 
         if event.is_private:
             logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
-
-    async def top_for_command(self, event: events.NewMessage.Event):
-        pass
 
     async def get_messages(self, input_channel=None, total_count=None, start_date=None, end_date=None, offset_id=0, limit=100) -> list[dict]:
         total_messages = 0
