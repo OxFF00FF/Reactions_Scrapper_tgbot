@@ -181,7 +181,7 @@ def get_user_data() -> dict:
             total_count_limit = input(f"{CYAN}▶️  Укажите количество: {WHITE}")
 
             if total_count_limit.isdigit():
-                print(f"{YELLOW}ℹ️  Получаем сообщений: {total_count_limit}{WHITE}\n")
+                print(f"{YELLOW}ℹ️  Получаем сообщений: {total_count_limit}{WHITE}")
                 result['messages_count'] = int(total_count_limit)
             else:
                 print(f"\n{LIGHT_RED}🚫  Количество должно быть числом{WHITE}")
