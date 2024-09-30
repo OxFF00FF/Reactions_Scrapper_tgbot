@@ -211,6 +211,8 @@ class EmotionsScrapperTelegramBot:
                 elif len(message) == 3:  # /topfor_<days>_<emoji>
                     days = int(message[1])
                     emoji = message[2]
+                    if emoji.isdigit():
+                        top_count = message[2]
                 elif len(message) == 4:  # /topfor_<days>_<top_count>_<emoji>
                     days = int(message[1])
                     top_count = int(message[2])
