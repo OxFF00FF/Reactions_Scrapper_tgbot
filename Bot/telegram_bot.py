@@ -24,9 +24,9 @@ class EmotionsScrapperTelegramBot:
         self.commands = [
             BotCommand(command='start', description='Запустить бота'),
             BotCommand(command='help', description='Получить справку'),
-            BotCommand(command='top_week', description='Топ сообщений за неделю'),
-            BotCommand(command='top_month', description='Топ сообщений за месяц'),
-            BotCommand(command='topfor', description='Топ сообщений период и выбранному эмоджи')
+            BotCommand(command='top_week', description='Топ за неделю'),
+            BotCommand(command='top_month', description='Топ за месяц'),
+            BotCommand(command='topfor', description='Топ за период и эмоджи')
         ]
 
         self.session_name = session_name
@@ -37,6 +37,8 @@ class EmotionsScrapperTelegramBot:
             user_id = event.message.from_id.user_id
         except:
             user_id = event.message.peer_id.user_id
+        finally:
+            user_id = 'n/a'
 
         sender = await event.get_sender()
         user_name = sender.first_name if sender else 'Unknown'
@@ -47,16 +49,28 @@ class EmotionsScrapperTelegramBot:
             logger.info(f"📩  ADD new message: {LIGHT_YELLOW}`{message_text}`{WHITE} FROM user: {user_name} {user_last_name} · {user_id}")
 
     async def start_command(self, event: events.NewMessage.Event):
-        await event.reply("Привет! . Чем могу помочь?")
+        text = f"👋  Привет. Я бот для получения сообщений из тегерам каналов\n\n" \
+               f"Список доступных команд:  /help"
+        await event.reply(text)
 
     async def help_command(self, event: events.NewMessage.Event):
         await event.reply(
-            "Доступные команды: \n"
-            "/start - Начать работу \n"
-            "/help - Помощь \n"
-            "/top_week - Топ сообщений по количеству 👍 за неделю \n"
-            "/top_month - Топ сообщений по количеству 👍 за месяц"
-            "/top_<days>_<quantity_in_top>_<emoji>"
+            "⚙️  Доступные команды: \n\n"
+            "·  /start - Приветсвтенное сообщение \n"
+            "·  /help - Помощь \n"
+            "·  /top_week - Топ сообщений по количеству 👍 за неделю \n"
+            "·  /top_month - Топ сообщений по количеству 👍 за месяц \n"
+            "·  /topfor - Топ сообщений выбранный период и выбранному эмоджи\n\n"
+            "ℹ️  __**Как использовать команду topfor**__\n\n"
+            "⚙️  **Синтаксис: `/topfor_<days>_<top_count>_<emoji>`**\n"
+            "**days** - Количество дней от текущей даты за которое будут получены сообщения (по умолчанию 1)\n"
+            "**top_count** - Количество строчек в топе (по умолчанию 5)\n"
+            "**emoji** - Выбранный эмоджи по которому сортируется топ (по умолчанию 👍)\n\n"
+            "⚙️  __**Использование:**__\n"
+            "/topfor - Получит и отсортирует посты за 1 день, по количеству 👍 и выведет первые 5\n\n"
+            "/topfor_5 - Получит и отсортирует посты за 5 дней, по количеству 👍 и выведет первые 5\n\n"
+            "/topfor_3_😂 - Получит отсортирует, посты за 3 дня, по количеству 😂 и выведет первые 5\n\n"
+            "/topfor_30_7_👎 - Получит и отсортирует посты за 30 дней, по количеству 👎 и выведет первые 7\n"
         )
 
     async def top_week_command(self, event: events.NewMessage.Event):
@@ -86,7 +100,7 @@ class EmotionsScrapperTelegramBot:
         if event.is_private:
             logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
 
-    async def top_month_command(self, event: events):
+    async def top_month_command(self, event: events.NewMessage.Event):
         try:
             user_id = event.message.from_id.user_id
         except:
@@ -124,22 +138,25 @@ class EmotionsScrapperTelegramBot:
             message = event.message.message.split('_')
 
             days = 1
+            top_count = 5
             emoji = '👍'
 
-            # /topfor_<days>_<top_count>_<emoji>
-            if len(message) == 2:  # /topfor_<days>_👍
-                days = message[1]
-                top_count = 5
-            elif len(message) == 3:  # /topfor_<days>_<emoji>
-                days = message[1]
-                top_count = 5
-                emoji = message[2]
-            elif len(message) == 4:  # /topfor_<days>_<top_count>_<emoji>
-                days = message[1]
-                top_count = message[2]
-                emoji = message[3]
+            try:
+                # /topfor_<days>_<top_count>_<emoji>
+                if len(message) == 2:  # /topfor_<days>
+                    days = int(message[1])
+                elif len(message) == 3:  # /topfor_<days>_<emoji>
+                    days = int(message[1])
+                    emoji = message[2]
+                elif len(message) == 4:  # /topfor_<days>_<top_count>_<emoji>
+                    days = int(message[1])
+                    top_count = int(message[2])
+                    emoji = str(message[3])
+            except ValueError:
+                await event.reply('days или top_count не являются числом', link_preview=False)
+                return ''
 
-            start_date, end_date = get_start_end_date(int(days))
+            start_date, end_date = get_start_end_date(days)
             logger.info(f"{YELLOW}ℹ️  Getting messages for period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
             logger.info(f"{YELLOW}ℹ️  Sorting by: {emoji} · Top count: {top_count}")
 
@@ -246,7 +263,6 @@ class EmotionsScrapperTelegramBot:
             self.bot.add_event_handler(self.top_week_command, events.NewMessage(pattern=r'^/top_week$'))
             self.bot.add_event_handler(self.top_month_command, events.NewMessage(pattern=r'^/top_month$'))
             self.bot.add_event_handler(self.top_for_days_emoji, events.NewMessage(pattern=r'^/topfor'))
-            self.bot.add_event_handler(self.top_for_command, events.NewMessage(pattern=r'^/topfor$'))
 
 
             # === CLIENT handlers === #
