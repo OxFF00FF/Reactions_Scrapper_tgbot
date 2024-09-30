@@ -78,9 +78,9 @@ def sorting_by_emoji(channel_url: str, data: list, emoji_counts: dict, target_em
             "url": url
         }
 
-        emoji_info = f"{YELLOW}{post_info['target_emoji']}{WHITE}: {BOLD}{LIGHT_CYAN}{post_info['target_emoji_count']:<3}{RESET}{WHITE} │ " + \
+        emoji_info = f"{YELLOW}{post_info['target_emoji']}{WHITE}: {BOLD}{LIGHT_CYAN}{str(post_info['target_emoji_count']).ljust(3)}{RESET}{WHITE} │ " + \
                      " / ".join(f"{DARK_GRAY}{emoji}: {count}{WHITE}" for emoji, count in post_info['emoji_counts'].items())
-        formatted_string = f"{e + 1:<3} │ {CYAN}{post_date}{WHITE} │ Пост: {url} · {emoji_info}"
+        formatted_string = f"{str(e + 1).ljust(3)} │ {CYAN}{post_date}{WHITE} │ Пост: {url} · {emoji_info}"
         post_info["formatted_string"] = formatted_string
 
         result.append(post_info)
@@ -145,7 +145,7 @@ def get_user_data() -> dict:
         result['channel'] = input_channel
 
         print(f"\n🤖  По какому эмоджи сортировать? (по умолчанию 👍)")
-        choice_emoji = input(f"{CYAN}▶️  Укажите эмоджи (Enter пропустить): ")
+        choice_emoji = input(f"{CYAN}▶️  Укажите эмоджи (Enter пропустить): {WHITE}")
         if choice_emoji == '':
             result['emoji'] = '👍'
         else:

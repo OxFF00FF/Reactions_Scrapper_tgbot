@@ -5,7 +5,7 @@ from Bot.telegram_bot import EmotionsScrapperTelegramBot
 from dotenv import load_dotenv
 
 
-def main():
+def main(console=False):
     logger.info("Application starting...")
 
     # Read .env file
@@ -28,8 +28,12 @@ def main():
         os.makedirs('sessions')
 
     telegram_bot = EmotionsScrapperTelegramBot(config=telegram_config)
-    telegram_bot.run()
+
+    if console:
+        telegram_bot.run_console()
+    else:
+        telegram_bot.run()
 
 
 if __name__ == "__main__":
-    main()
+    main(console=True)

@@ -9,7 +9,7 @@ from telethon.utils import get_input_peer
 
 from Bot.colors import *
 from Bot.setup_logging import logger
-from Bot.utils import parse_messages, most_popular_posts, sorting_by_emoji, get_start_end_date
+from Bot.utils import parse_messages, most_popular_posts, sorting_by_emoji, get_start_end_date, save_file, file_path, get_user_data, line_before, line_after
 
 
 class EmotionsScrapperTelegramBot:
@@ -248,6 +248,42 @@ class EmotionsScrapperTelegramBot:
                 logger.info(f"📨  Nothing to send")
     # ===== /COMMANDS ===== #
 
+    async def get_top_posts(self):
+        user_input = get_user_data()
+        channel = user_input['channel']
+        emoji = user_input['emoji']
+
+        if 'date_range' in user_input:
+            start = user_input['date_range']['start']
+            end = user_input['date_range']['end']
+            channel_messages = await self.get_messages(input_channel=channel, start_date=start, end_date=end)
+
+        if 'messages_count' in user_input:
+            count = int(user_input['messages_count'])
+            channel_messages = await self.get_messages(input_channel=channel, total_count=count)
+
+        # Сохранение полученных сообщений в json файл
+        try:
+            save_file(channel_messages)
+            logger.info(f"{LIGHT_GREEN}✅  Файл успешно сохранен по пути:{WHITE}")
+            logger.info(f"{LIGHT_GREEN}💾  {file_path}{WHITE}")
+        except Exception as e:
+            logger.error(f"\n{RED}❌  Не удалось сохранить файл{WHITE}\n{e}\n")
+
+        data, emoji_counts, target_emoji_counts = parse_messages(channel, channel_messages, target_emoji=emoji)
+        top_posts = sorting_by_emoji(channel, data, emoji_counts, target_emoji_counts,
+                                     target_emoji=emoji, zero_target_emoji=False)
+
+        if top_posts:
+            print(f"\n{BOLD}Топ: {LIGHT_CYAN}{len(top_posts)}{WHITE} постов · По количеству эмоджи: {YELLOW}{emoji}{WHITE} · Всего постов: {LIGHT_MAGENTA}{len(data)}{RESET}")
+            line_before(width=71, blank_line=False)
+            for post in top_posts:
+                print(post['formatted_string'])
+            line_after(width=71)
+
+        else:
+            print(f"ℹ️  Не найдено постов с эмоджи: {YELLOW}{emoji}{WHITE} в указанном диапозоне дат или количестве")
+
     def run(self):
         try:
             """
@@ -281,3 +317,6 @@ class EmotionsScrapperTelegramBot:
         except KeyboardInterrupt:
             logger.info("Application stopped...")
             sys.exit(0)
+
+    def run_console(self):
+        self.client.loop.run_until_complete(self.get_top_posts())
