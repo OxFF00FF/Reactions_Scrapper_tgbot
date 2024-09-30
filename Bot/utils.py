@@ -34,8 +34,7 @@ def get_start_end_date(days):
 
 
 def sorting_by_emoji(channel_url: str, data: list, emoji_counts: dict, target_emoji_counts: dict, target_emoji='👍', zero_target_emoji=False) -> list:
-    # print(f"{YELLOW}ℹ️  Сортируем сообщения{WHITE}")
-    logger.info(f"{YELLOW}ℹ️  Сортируем сообщения{WHITE}")
+    logger.info(f"{YELLOW}ℹ️  Sorting messages{WHITE}")
 
     result = []
 
@@ -83,19 +82,17 @@ def sorting_by_emoji(channel_url: str, data: list, emoji_counts: dict, target_em
     return result
 
 
-def most_popular_posts(posts, emoji: str = '👍') -> str:
+def most_popular_posts(posts, emoji: str = '👍', top_count=5) -> str:
     message = f"**Самые популярные посты по количеству** {emoji}:\n\n"
-    for i in range(min(5, len(posts))):
-        message += f"{i + 1}️⃣  [Место]({posts[i]['url']}) · {posts[i]['target_emoji_count']}\n" \
-                   f"{posts[i]['url']}\n\n"
+    for i in range(min(top_count, len(posts))):
+        message += f"{i + 1}️⃣  [Место]({posts[i]['url']}) · {posts[i]['target_emoji_count']}\n"
     return message
 
 
 def parse_messages(channel_url: str, messages: list, target_emoji: str = '👍') -> tuple:
     # line_before(width=20)
 
-    # print(f"{YELLOW}ℹ️  Парсим сообщения{WHITE}")
-    logger.info(f"{YELLOW}ℹ️  Парсим сообщения{WHITE}")
+    logger.info(f"{YELLOW}ℹ️  Parse messages{WHITE}")
 
     emoji_counts = {}
     target_emoji_counts = {}

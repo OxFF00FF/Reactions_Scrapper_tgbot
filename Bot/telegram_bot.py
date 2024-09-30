@@ -63,19 +63,26 @@ class EmotionsScrapperTelegramBot:
         except:
             user_id = event.message.peer_id.user_id
 
-        start_date, end_date = get_start_end_date(7)
-        logger.info(f"{YELLOW}ℹ️  Получаем сообщения за период: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
+        loading_message = await self.bot.send_message(entity=user_id, message='⏳')
 
-        channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
+        def _execute():
+            start_date, end_date = get_start_end_date(7)
+            logger.info(f"{YELLOW}ℹ️  Getting messages for a period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
 
-        data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages)
-        top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts, zero_target_emoji=False)
+            channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
 
-        text = f'Топ сообщений за неделю\n{most_popular_posts(top_posts)}'
-        await event.reply(text, link_preview=False)
+            data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages)
+            top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts, zero_target_emoji=False)
+
+            text = f'Топ сообщений за неделю\n{most_popular_posts(top_posts)}'
+            await event.reply(text, link_preview=False)
+        _execute()
+
+        await self.bot.delete_messages(entity=user_id, message_ids=loading_message.id)
 
         if event.is_private:
             logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
+
 
     async def top_month_command(self, event: events):
         try:
@@ -84,7 +91,7 @@ class EmotionsScrapperTelegramBot:
             user_id = event.message.peer_id.user_id
 
         start_date, end_date = get_start_end_date(30)
-        logger.info(f"{YELLOW}ℹ️  Получаем сообщения за период: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
+        logger.info(f"{YELLOW}ℹ️  Getting messages for a period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
 
         channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
 
@@ -149,6 +156,7 @@ class EmotionsScrapperTelegramBot:
             if len(messages) < limit:
                 break
             print(f"\r🆔  Смещение ID: {offset_id} · Всего сообщений: {total_messages}", end="", flush=True)
+            print()
 
         logger.info(f"{YELLOW}ℹ️  Получено сообщений: {total_messages}{WHITE}")
         return all_messages
@@ -171,9 +179,15 @@ class EmotionsScrapperTelegramBot:
             """
             Runs the bot indefinitely until the user presses Ctrl+C
             """
-
             # === BOT handlers === #
+
+            # Message handlers
             self.bot.add_event_handler(self.save_message, events.NewMessage())
+
+            self.bot.add_event_handler(self.start_command, events.NewMessage(pattern='/start'))
+            self.bot.add_event_handler(self.help_command, events.NewMessage(pattern='/help'))
+            self.bot.add_event_handler(self.top_week_command, events.NewMessage(pattern='/top_week'))
+            self.bot.add_event_handler(self.top_month_command, events.NewMessage(pattern='/top_month'))
 
 
             # === CLIENT handlers === #
@@ -181,14 +195,9 @@ class EmotionsScrapperTelegramBot:
             # Message handlers
             self.client.add_event_handler(self.save_message, events.NewMessage())
 
-            self.client.add_event_handler(self.start_command, events.NewMessage(pattern='/start'))
-            self.client.add_event_handler(self.help_command, events.NewMessage(pattern='/help'))
-            self.client.add_event_handler(self.top_week_command, events.NewMessage(pattern='/top_week'))
-            self.client.add_event_handler(self.top_month_command, events.NewMessage(pattern='/top_month'))
-
-            self.client.loop.run_until_complete(self.post_init())
 
             # Starting async tasks Client and Bot
+            self.client.loop.run_until_complete(self.post_init())
             asyncio.gather(self.client.run_until_disconnected(), self.bot.run_until_disconnected())
 
         except ConnectionError as e:
