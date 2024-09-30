@@ -7,7 +7,7 @@ from Bot.colors import *
 
 
 def main():
-    logger.warning("Application starting...")
+    logger.info("Application starting...")
 
     # Read .env file
     load_dotenv()

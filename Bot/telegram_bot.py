@@ -25,7 +25,8 @@ class EmotionsScrapperTelegramBot:
             BotCommand(command='start', description='Запустить бота'),
             BotCommand(command='help', description='Получить справку'),
             BotCommand(command='top_week', description='Топ сообщений за неделю'),
-            BotCommand(command='top_month', description='Топ сообщений за месяц')
+            BotCommand(command='top_month', description='Топ сообщений за месяц'),
+            BotCommand(command='topfor', description='Топ сообщений период и выбранному эмоджи')
         ]
 
         self.session_name = session_name
@@ -86,7 +87,6 @@ class EmotionsScrapperTelegramBot:
             logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
 
     async def top_month_command(self, event: events):
-        user_id = 'n/a'
         try:
             user_id = event.message.from_id.user_id
         except:
@@ -126,13 +126,15 @@ class EmotionsScrapperTelegramBot:
             days = 1
             emoji = '👍'
 
-            if len(message) == 2:  # /topfor_7
+            # /topfor_<days>_<top_count>_<emoji>
+            if len(message) == 2:  # /topfor_<days>_👍
                 days = message[1]
                 top_count = 5
-            elif len(message) == 3:  # /topfor_7_7
+            elif len(message) == 3:  # /topfor_<days>_<emoji>
                 days = message[1]
                 top_count = 5
-            elif len(message) == 4:  # /topfor_7_7_👍
+                emoji = message[2]
+            elif len(message) == 4:  # /topfor_<days>_<top_count>_<emoji>
                 days = message[1]
                 top_count = message[2]
                 emoji = message[3]
@@ -155,6 +157,9 @@ class EmotionsScrapperTelegramBot:
 
         if event.is_private:
             logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
+
+    async def top_for_command(self, event: events.NewMessage.Event):
+        pass
 
     async def get_messages(self, input_channel=None, total_count=None, start_date=None, end_date=None, offset_id=0, limit=100) -> list[dict]:
         total_messages = 0
@@ -207,10 +212,10 @@ class EmotionsScrapperTelegramBot:
             total_messages = len(all_messages)
             if len(messages) < limit:
                 break
-            print(f"\r🆔  Смещение ID: {offset_id} · Всего сообщений: {total_messages}", end="", flush=True)
+            print(f"\r🆔  Offset ID: {offset_id} · Total messages: {total_messages}", end="", flush=True)
 
         print()
-        logger.info(f"{YELLOW}ℹ️  Получено сообщений: {total_messages}{WHITE}")
+        logger.info(f"{YELLOW}ℹ️  Recieved messages: {total_messages}{WHITE}")
         return all_messages
 
     async def post_init(self) -> None:
@@ -218,10 +223,10 @@ class EmotionsScrapperTelegramBot:
         Post initialization hook for the bot.
         """
         bot = await self.bot.get_me()
-        logger.info(f"{LIGHT_BLUE}Bot started as `{WHITE}{bot.first_name.capitalize()}{LIGHT_BLUE}` · https://t.me/{bot.username}{WHITE}")
+        logger.info(f"{LIGHT_BLUE}Bot started as {WHITE}{bot.first_name.capitalize()} · https://t.me/{bot.username}{WHITE}")
 
         me = await self.client.get_me()
-        logger.info(f"{LIGHT_BLUE}Client started as `{WHITE}{me.first_name} {me.last_name}{LIGHT_BLUE}` ({me.username}) · {me.id} {WHITE}")
+        logger.info(f"{LIGHT_BLUE}Client started as {WHITE}{me.first_name} {me.last_name}{LIGHT_BLUE} ({me.username}) · {me.id} {WHITE}")
 
         # Add commands to bot commands list
         await self.bot(functions.bots.SetBotCommandsRequest(types.BotCommandScopeDefault(), lang_code='ru', commands=self.commands))
@@ -241,6 +246,7 @@ class EmotionsScrapperTelegramBot:
             self.bot.add_event_handler(self.top_week_command, events.NewMessage(pattern=r'^/top_week$'))
             self.bot.add_event_handler(self.top_month_command, events.NewMessage(pattern=r'^/top_month$'))
             self.bot.add_event_handler(self.top_for_days_emoji, events.NewMessage(pattern=r'^/topfor'))
+            self.bot.add_event_handler(self.top_for_command, events.NewMessage(pattern=r'^/topfor$'))
 
 
             # === CLIENT handlers === #
@@ -261,5 +267,5 @@ class EmotionsScrapperTelegramBot:
             exit(1)
 
         except KeyboardInterrupt:
-            logger.warning("Application stopped...")
+            logger.info("Application stopped...")
             sys.exit(0)
