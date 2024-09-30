@@ -136,8 +136,8 @@ class EmotionsScrapperTelegramBot:
             "**top_count** - Количество строчек в топе (по умолчанию 5)\n"
             "**emoji** - Выбранный эмоджи по которому сортируется топ (по умолчанию 👍)\n\n"
             "⚙️  __**Использование:**__\n"
-            "/topfor - Получит и отсортирует посты за 1 день, по количеству 👍 и выведет первые 5\n\n"
             "/topfor_5 - Получит и отсортирует посты за 5 дней, по количеству 👍 и выведет первые 5\n\n"
+            "/topfor_7_10 - Получит отсортирует, посты за 7 дней, по количеству 👍 и выведет первые 10\n\n"
             "/topfor_3_😂 - Получит отсортирует, посты за 3 дня, по количеству 😂 и выведет первые 5\n\n"
             "/topfor_30_7_👎 - Получит и отсортирует посты за 30 дней, по количеству 👎 и выведет первые 7\n"
         )
@@ -217,6 +217,10 @@ class EmotionsScrapperTelegramBot:
                     days = int(message[1])
                     top_count = int(message[2])
                     emoji = str(message[3])
+                else:
+                    await event.reply(f"Для работы команды `topfor` нужно передать параметры. Подробнее: /help")
+                    return ''
+
             except ValueError:
                 await event.reply('days или top_count не являются числом', link_preview=False)
                 return ''
@@ -238,7 +242,10 @@ class EmotionsScrapperTelegramBot:
         await self.bot.delete_messages(entity=user_id, message_ids=loading_message.id)
 
         if event.is_private:
-            logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
+            if text != '':
+                logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
+            else:
+                logger.info(f"📨  Nothing to send")
     # ===== /COMMANDS ===== #
 
     def run(self):
