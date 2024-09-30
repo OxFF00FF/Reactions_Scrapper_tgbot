@@ -32,6 +32,7 @@ class EmotionsScrapperTelegramBot:
         self.session_name = session_name
         self.config = config
 
+    # ===== UTILS ===== #
     async def save_message(self, event: events.NewMessage.Event):
         sender = await event.get_sender()
         user_id = sender.id
@@ -41,127 +42,6 @@ class EmotionsScrapperTelegramBot:
 
         if event.is_private:
             logger.info(f"📩  ADD new message: {LIGHT_YELLOW}`{message_text}`{WHITE} FROM user: {user_name} {user_last_name} · {user_id}")
-
-    async def start_command(self, event: events.NewMessage.Event):
-        text = f"👋  Привет. Я бот для получения сообщений из тегерам каналов\n\n" \
-               f"Список доступных команд:  /help"
-        await event.reply(text)
-
-    async def help_command(self, event: events.NewMessage.Event):
-        await event.reply(
-            "⚙️  Доступные команды: \n\n"
-            "·  /start - Приветсвтенное сообщение \n"
-            "·  /help - Помощь \n"
-            "·  /top_week - Топ сообщений по количеству 👍 за неделю \n"
-            "·  /top_month - Топ сообщений по количеству 👍 за месяц \n"
-            "·  /topfor - Топ сообщений выбранный период и выбранному эмоджи\n\n"
-            "ℹ️  __**Как использовать команду topfor**__\n\n"
-            "⚙️  **Синтаксис: `/topfor_<days>_<top_count>_<emoji>`**\n"
-            "**days** - Количество дней от текущей даты за которое будут получены сообщения (по умолчанию 1)\n"
-            "**top_count** - Количество строчек в топе (по умолчанию 5)\n"
-            "**emoji** - Выбранный эмоджи по которому сортируется топ (по умолчанию 👍)\n\n"
-            "⚙️  __**Использование:**__\n"
-            "/topfor - Получит и отсортирует посты за 1 день, по количеству 👍 и выведет первые 5\n\n"
-            "/topfor_5 - Получит и отсортирует посты за 5 дней, по количеству 👍 и выведет первые 5\n\n"
-            "/topfor_3_😂 - Получит отсортирует, посты за 3 дня, по количеству 😂 и выведет первые 5\n\n"
-            "/topfor_30_7_👎 - Получит и отсортирует посты за 30 дней, по количеству 👎 и выведет первые 7\n"
-        )
-
-    async def top_week_command(self, event: events.NewMessage.Event):
-        sender = await event.get_sender()
-        user_id = sender.id
-
-        loading_message = await self.bot.send_message(entity=user_id, message='⏳')
-
-        async def _execute():
-            start_date, end_date = get_start_end_date(7)
-            logger.info(f"{YELLOW}ℹ️  Getting messages for a period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
-
-            channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
-
-            data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages)
-            top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts, zero_target_emoji=False)
-
-            result = f'Топ сообщений за неделю\n{most_popular_posts(top_posts)}'
-            await event.reply(result, link_preview=False)
-            return result
-        text = await _execute()
-
-        await self.bot.delete_messages(entity=user_id, message_ids=loading_message.id)
-
-        if event.is_private:
-            logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
-
-    async def top_month_command(self, event: events.NewMessage.Event):
-        sender = await event.get_sender()
-        user_id = sender.id
-
-        loading_message = await self.bot.send_message(entity=user_id, message='⏳')
-
-        async def _execute():
-            start_date, end_date = get_start_end_date(30)
-            logger.info(f"{YELLOW}ℹ️  Getting messages for period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
-
-            channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
-
-            data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages)
-            top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts, zero_target_emoji=False)
-
-            result = f'Топ сообщений за месяц\n{most_popular_posts(top_posts)}'
-            await event.reply(result, link_preview=False)
-        text = await _execute()
-
-        await self.bot.delete_messages(entity=user_id, message_ids=loading_message.id)
-
-        if event.is_private:
-            logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
-
-    async def top_for_days_emoji(self, event: events.NewMessage.Event):
-        sender = await event.get_sender()
-        user_id = sender.id
-
-        loading_message = await self.bot.send_message(entity=user_id, message='⏳')
-
-        async def _execute():
-            message = event.message.message.split('_')
-
-            days = 1
-            top_count = 5
-            emoji = '👍'
-
-            try:
-                # /topfor_<days>_<top_count>_<emoji>
-                if len(message) == 2:  # /topfor_<days>
-                    days = int(message[1])
-                elif len(message) == 3:  # /topfor_<days>_<emoji>
-                    days = int(message[1])
-                    emoji = message[2]
-                elif len(message) == 4:  # /topfor_<days>_<top_count>_<emoji>
-                    days = int(message[1])
-                    top_count = int(message[2])
-                    emoji = str(message[3])
-            except ValueError:
-                await event.reply('days или top_count не являются числом', link_preview=False)
-                return ''
-
-            start_date, end_date = get_start_end_date(days)
-            logger.info(f"{YELLOW}ℹ️  Getting messages for period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
-            logger.info(f"{YELLOW}ℹ️  Sorting by: {emoji} · Top count: {top_count}")
-
-            channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
-
-            data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages, target_emoji=emoji)
-            top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts, target_emoji=emoji, zero_target_emoji=False)
-
-            result = f'Топ сообщений за {days} дней\n{most_popular_posts(top_posts, emoji, top_count)}'
-            await event.reply(result, link_preview=False)
-            return result
-        text = await _execute()
-
-        await self.bot.delete_messages(entity=user_id, message_ids=loading_message.id)
-
-        if event.is_private:
-            logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
 
     async def get_messages(self, input_channel=None, total_count=None, start_date=None, end_date=None, offset_id=0, limit=100) -> list[dict]:
         total_messages = 0
@@ -232,6 +112,132 @@ class EmotionsScrapperTelegramBot:
 
         # Add commands to bot commands list
         await self.bot(functions.bots.SetBotCommandsRequest(types.BotCommandScopeDefault(), lang_code='ru', commands=self.commands))
+    # ===== /UTILS ===== #
+
+    ####################################################
+
+    # ===== COMMANDS ===== #
+    async def start_command(self, event: events.NewMessage.Event):
+        text = f"👋  Привет. Я бот для получения сообщений из тегерам каналов\n\n" \
+               f"Список доступных команд:  /help"
+        await event.reply(text)
+
+    async def help_command(self, event: events.NewMessage.Event):
+        await event.reply(
+            "⚙️  Доступные команды: \n\n"
+            "·  /start - Приветсвтенное сообщение \n"
+            "·  /help - Помощь \n"
+            "·  /top_week - Топ сообщений по количеству 👍 за неделю \n"
+            "·  /top_month - Топ сообщений по количеству 👍 за месяц \n"
+            "·  /topfor - Топ сообщений выбранный период и выбранному эмоджи\n\n"
+            "ℹ️  __**Как использовать команду topfor**__\n\n"
+            "⚙️  **Синтаксис: `/topfor_<days>_<top_count>_<emoji>`**\n"
+            "**days** - Количество дней от текущей даты за которое будут получены сообщения (по умолчанию 1)\n"
+            "**top_count** - Количество строчек в топе (по умолчанию 5)\n"
+            "**emoji** - Выбранный эмоджи по которому сортируется топ (по умолчанию 👍)\n\n"
+            "⚙️  __**Использование:**__\n"
+            "/topfor - Получит и отсортирует посты за 1 день, по количеству 👍 и выведет первые 5\n\n"
+            "/topfor_5 - Получит и отсортирует посты за 5 дней, по количеству 👍 и выведет первые 5\n\n"
+            "/topfor_3_😂 - Получит отсортирует, посты за 3 дня, по количеству 😂 и выведет первые 5\n\n"
+            "/topfor_30_7_👎 - Получит и отсортирует посты за 30 дней, по количеству 👎 и выведет первые 7\n"
+        )
+
+    async def top_week_command(self, event: events.NewMessage.Event):
+        sender = await event.get_sender()
+        user_id = sender.id
+
+        loading_message = await self.bot.send_message(entity=user_id, message='⏳')
+
+        async def _execute():
+            start_date, end_date = get_start_end_date(7)
+            logger.info(f"{YELLOW}ℹ️  Getting messages for period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
+
+            channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
+
+            data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages)
+            top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts, zero_target_emoji=False)
+
+            result = f'Топ сообщений за неделю\n{most_popular_posts(top_posts)}'
+            await event.reply(result, link_preview=False)
+            return result
+        text = await _execute()
+
+        await self.bot.delete_messages(entity=user_id, message_ids=loading_message.id)
+
+        if event.is_private:
+            logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
+
+    async def top_month_command(self, event: events.NewMessage.Event):
+        sender = await event.get_sender()
+        user_id = sender.id
+
+        loading_message = await self.bot.send_message(entity=user_id, message='⏳')
+
+        async def _execute():
+            start_date, end_date = get_start_end_date(30)
+            logger.info(f"{YELLOW}ℹ️  Getting messages for period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
+
+            channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
+
+            data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages)
+            top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts, zero_target_emoji=False)
+
+            result = f'Топ сообщений за месяц\n{most_popular_posts(top_posts)}'
+            await event.reply(result, link_preview=False)
+        text = await _execute()
+
+        await self.bot.delete_messages(entity=user_id, message_ids=loading_message.id)
+
+        if event.is_private:
+            logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
+
+    async def top_for_command(self, event: events.NewMessage.Event):
+        sender = await event.get_sender()
+        user_id = sender.id
+
+        loading_message = await self.bot.send_message(entity=user_id, message='⏳')
+
+        async def _execute():
+            message = event.message.message.split('_')
+
+            days = 1
+            top_count = 5
+            emoji = '👍'
+
+            try:
+                # /topfor_<days>_<top_count>_<emoji>
+                if len(message) == 2:  # /topfor_<days>
+                    days = int(message[1])
+                elif len(message) == 3:  # /topfor_<days>_<emoji>
+                    days = int(message[1])
+                    emoji = message[2]
+                elif len(message) == 4:  # /topfor_<days>_<top_count>_<emoji>
+                    days = int(message[1])
+                    top_count = int(message[2])
+                    emoji = str(message[3])
+            except ValueError:
+                await event.reply('days или top_count не являются числом', link_preview=False)
+                return ''
+
+            start_date, end_date = get_start_end_date(days)
+            logger.info(f"{YELLOW}ℹ️  Getting messages for period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
+            logger.info(f"{YELLOW}ℹ️  Sorting by: {emoji} · Top count: {top_count}")
+
+            channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
+
+            data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages, target_emoji=emoji)
+            top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts, target_emoji=emoji, zero_target_emoji=False)
+
+            result = f'Топ сообщений за {days} дней\n{most_popular_posts(top_posts, emoji, top_count)}'
+            await event.reply(result, link_preview=False)
+            return result
+        text = await _execute()
+
+        await self.bot.delete_messages(entity=user_id, message_ids=loading_message.id)
+
+        if event.is_private:
+            logger.info(f"📨  SEND message: {LIGHT_YELLOW}`{text[:20]}...{text[-20:]}`{WHITE} TO user: {user_id}".replace('\n', ''))
+    # ===== /COMMANDS ===== #
 
     def run(self):
         try:
@@ -243,16 +249,12 @@ class EmotionsScrapperTelegramBot:
             # Message handlers
             self.bot.add_event_handler(self.save_message, events.NewMessage())
 
+            # Command handlers
             self.bot.add_event_handler(self.start_command, events.NewMessage(pattern=r'^/start$'))
             self.bot.add_event_handler(self.help_command, events.NewMessage(pattern=r'^/help$'))
             self.bot.add_event_handler(self.top_week_command, events.NewMessage(pattern=r'^/top_week$'))
             self.bot.add_event_handler(self.top_month_command, events.NewMessage(pattern=r'^/top_month$'))
-            self.bot.add_event_handler(self.top_for_days_emoji, events.NewMessage(pattern=r'^/topfor'))
-
-
-            # === CLIENT handlers === #
-
-            # Message handlers
+            self.bot.add_event_handler(self.top_for_command, events.NewMessage(pattern=r'^/topfor'))
 
 
             # Starting async tasks Client and Bot
