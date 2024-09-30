@@ -21,7 +21,9 @@ def main(console=False):
         'api_id': int(os.environ.get('API_ID')),
         'api_hash': str(os.environ.get('API_HASH')),
         'token': str(os.environ['TELEGRAM_BOT_TOKEN']),
-        'logs_group': int(os.environ.get('BOT_LOGS_GROUP_ID'))
+        'logs_group': int(os.environ.get('BOT_LOGS_GROUP_ID')),
+        'allowed_user_ids': os.environ.get('ALLOWED_TELEGRAM_USER_IDS', '*'),
+        'admin_user_ids': os.environ.get('ADMIN_USER_IDS', '-'),
     }
 
     if not os.path.exists('sessions'):
