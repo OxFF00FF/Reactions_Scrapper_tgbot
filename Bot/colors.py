@@ -1,3 +1,5 @@
+import re
+
 DEFAULT = '\x1b[39m'
 BLACK = '\x1b[30m'
 RED = '\x1b[31m'
@@ -47,3 +49,14 @@ def colors_test():
           f"{UNDERLINED}UNDERLINED{RESET}\n"
           f"{REVERSED}REVERSED{RESET}\n"
           f"{STRIKETHROUGH}STRIKETHROUGH{RESET}")
+
+
+def remove_colors(text):
+    pattern = re.compile(
+        r'(\x1b\[39m|\x1b\[30m|\x1b\[31m|\x1b\[91m|\x1b\[32m|\x1b\[92m|'
+        r'\x1b\[33m|\x1b\[93m|\x1b\[34m|\x1b\[94m|\x1b\[35m|\x1b\[95m|'
+        r'\x1b\[36m|\x1b\[96m|\x1b\[38;2;\d+;\d+;\d+m|\x1b\[97m|'
+        r'\x1b\[37m|\x1b\[90m|\x1b\[0m|\033\[1m|\033\[4m|\033\[9m|\033\[7m)'
+    )
+
+    return pattern.sub('', text)

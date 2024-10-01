@@ -71,10 +71,11 @@ def set_logger(log_name: str = 'app', log_file: str = 'logs.log'):
 
     class FileFormatter(logging.Formatter):
         def format(self, record):
+            message = remove_colors(record.getMessage())
             log_message = f"{record.asctime} - " \
                           f"{record.name} - " \
                           f"{record.levelname.ljust(8)} |  " \
-                          f"{record.getMessage()}  | " \
+                          f"{message}  | " \
                           f"{record.filename} · " \
                           f"{record.funcName}() · " \
                           f"{record.lineno} line"
