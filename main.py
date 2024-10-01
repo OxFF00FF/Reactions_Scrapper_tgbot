@@ -4,10 +4,11 @@ import os
 from Bot.telegram_bot import EmotionsScrapperTelegramBot
 from dotenv import load_dotenv
 import argparse
+from Bot.colors import *
 
 
 def main(console=False):
-    logger.info("Application starting...")
+    logger.info(f"⚡️  {YELLOW}Application starting...{WHITE}")
 
     # Read .env file
     load_dotenv()

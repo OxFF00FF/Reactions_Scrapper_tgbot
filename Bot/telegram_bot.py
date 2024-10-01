@@ -1,5 +1,4 @@
 import asyncio
-import sys
 import traceback
 
 from telethon import TelegramClient, events, functions, types
@@ -114,13 +113,15 @@ class EmotionsScrapperTelegramBot:
         Post initialization hook for the bot.
         """
         bot = await self.bot.get_me()
-        logger.info(f"{LIGHT_BLUE}Bot started as {WHITE}{bot.first_name.capitalize()} · https://t.me/{bot.username}{WHITE}")
+        logger.info(f"🤖  {LIGHT_BLUE}Bot started as {WHITE}{bot.first_name.capitalize()} · https://t.me/{bot.username}{WHITE}")
 
         me = await self.client.get_me()
-        logger.info(f"{LIGHT_BLUE}Client started as {WHITE}{me.first_name} {me.last_name}{LIGHT_BLUE} ({me.username}) · {me.id} {WHITE}")
+        logger.info(f"😶  {LIGHT_BLUE}Client started as {WHITE}{me.first_name} {me.last_name}{LIGHT_BLUE} ({me.username}) · {me.id} {WHITE}")
 
         # Add commands to bot commands list
         await self.bot(functions.bots.SetBotCommandsRequest(types.BotCommandScopeDefault(), lang_code='ru', commands=self.commands))
+
+        logger.info(f"🚀  {LIGHT_GREEN}Application is running.{LIGHT_YELLOW} Press CTRL+C to stop{WHITE}")
     # ===== /UTILS ===== #
 
     ####################################################
@@ -344,16 +345,16 @@ class EmotionsScrapperTelegramBot:
             asyncio.gather(self.client.run_until_disconnected(), self.bot.run_until_disconnected())
 
         except ConnectionError as e:
-            logger.error(f"{RED}❌  Не удалось получить ответ от телеграм API{WHITE}\n{e}")
+            logger.error(f"{RED}❌  Failed to receive response from telegram API{WHITE}\n{e}")
+            exit(1)
+
+        except TypeError:
+            logger.info(f"{LIGHT_RED}🛑  Application stopped{WHITE}")
             exit(1)
 
         except Exception as e:
             logger.error(f"{e}\n{traceback.format_exc()}")
             exit(1)
-
-        except KeyboardInterrupt:
-            logger.info("Application stopped...")
-            sys.exit(0)
 
     def run_console(self):
         self.client.loop.run_until_complete(self.get_top_posts())
