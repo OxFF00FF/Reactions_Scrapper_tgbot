@@ -1,4 +1,4 @@
-# Установка и запуск
+# Установка и запуск linux
 
 ### 1. Скопировать код из гитхаба:
 - `git clone https://github.com/OxFF00FF/Reactions_Scrapper_tgbot.git`
@@ -34,4 +34,16 @@
 - `python main.py` или `python3 main.py`
 
 ### 9. Запустить консоль:
--  `python main.py -с` или `python3 main.py -с`
+- `python main.py -с` или `python3 main.py -с`
+
+
+# Установка и запуск Windows
+
+### 1. Установить зависимости:
+- Запустить файл `3. INSTALL.bat`
+
+### 2. Установить Windows терминал:
+- Запустить файл `WT setup/Windows Terminal Installer.exe`
+
+### 3. Запуск бота:
+- Запустить файл `2. START_WT.bat`
