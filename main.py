@@ -3,6 +3,7 @@ from Bot.setup_logging import logger
 import os
 from Bot.telegram_bot import EmotionsScrapperTelegramBot
 from dotenv import load_dotenv
+import argparse
 
 
 def main(console=False):
@@ -38,4 +39,9 @@ def main(console=False):
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Запуск main с опцией -c для console.")
+    parser.add_argument('-c', '--console', action='store_true', help="Запуск с console=True")
+    args = parser.parse_args()
+
+    main(console=args.console)
+
