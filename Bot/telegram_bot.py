@@ -16,7 +16,7 @@ class EmotionsScrapperTelegramBot:
 
     def __init__(self, config, session_name: str = 'client'):
         # Init Bot and Client
-        self.client = TelegramClient(f'sessions/{session_name}', config['api_id'], config['api_hash'], system_version='4.16.30-vxCUSTOM').start()
+        self.client = TelegramClient(f'sessions/{session_name}', config['api_id'], config['api_hash'], system_version='4.16.30-vxCUSTOM').start(phone=config['phone'])
         self.bot = TelegramClient(f'sessions/bot', config['api_id'], config['api_hash']).start(bot_token=config['token'])
 
         # Set bot commands
