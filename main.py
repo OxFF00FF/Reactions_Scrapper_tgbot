@@ -23,7 +23,7 @@ def main(console=False):
         'token': str(os.environ['TELEGRAM_BOT_TOKEN']),
         'allowed_user_ids': os.environ.get('ALLOWED_TELEGRAM_USER_IDS', '*'),
         'admin_user_ids': os.environ.get('ADMIN_USER_IDS', '-'),
-        'logs_group': int(os.environ.get('BOT_LOGS_GROUP_ID'))
+        'logs_group': os.environ.get('BOT_LOGS_GROUP_ID')
     }
 
     if not os.path.exists('sessions'):
@@ -31,10 +31,10 @@ def main(console=False):
 
     telegram_bot = EmotionsScrapperTelegramBot(config=telegram_config)
 
-    # if console:
-    #     telegram_bot.run_console()
-    # else:
-    telegram_bot.run()
+    if console:
+        telegram_bot.run_console()
+    else:
+        telegram_bot.run()
 
 
 if __name__ == "__main__":

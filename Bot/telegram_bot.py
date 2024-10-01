@@ -44,9 +44,13 @@ class EmotionsScrapperTelegramBot:
         user_last_name = sender.last_name if sender else 'Unknown'
         message_text = event.message.message
 
+        logs_group_id = self.config['logs_group']
+
         if event.is_private:
             logger.info(f"📩  ADD new message: {LIGHT_YELLOW}`{message_text}`{WHITE} FROM user: {user_name} {user_last_name} · {user_id}")
-            await self.bot.send_message(self.config['logs_group'], f"📩  New message: `{message_text}`\n🙍‍♂️  From: {user_name}\n🆔  {user_id}")
+
+        if logs_group_id:
+            await self.bot.send_message(int(logs_group_id), f"📩  New message: `{message_text}`\n🙍‍♂️  From: {user_name}\n🆔  {user_id}")
 
     async def get_messages(self, input_channel=None, total_count=None, start_date=None, end_date=None, offset_id=0, limit=100) -> list[dict]:
         total_messages = 0
