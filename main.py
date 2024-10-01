@@ -14,7 +14,7 @@ def main(console=False):
 
     # Read .env file
     load_dotenv()
-    required_values = ['API_ID', 'API_HASH', 'TELEGRAM_BOT_TOKEN']
+    required_values = ['API_ID', 'API_HASH', 'PHONE_NUMBER', 'TELEGRAM_BOT_TOKEN']
     missing_values = [value for value in required_values if os.environ.get(value) is None]
     if len(missing_values) > 0:
         logger.error(f'The following environment values are missing in your .env: {", ".join(missing_values)}')
@@ -27,7 +27,8 @@ def main(console=False):
         'token': str(os.environ['TELEGRAM_BOT_TOKEN']),
         'allowed_user_ids': os.environ.get('ALLOWED_TELEGRAM_USER_IDS', '*'),
         'admin_user_ids': os.environ.get('ADMIN_USER_IDS', '-'),
-        'logs_group': os.environ.get('BOT_LOGS_GROUP_ID')
+        'logs_group': os.environ.get('BOT_LOGS_GROUP_ID'),
+        'phone': os.environ.get('PHONE_NUMBER')
     }
 
     if not os.path.exists('sessions'):

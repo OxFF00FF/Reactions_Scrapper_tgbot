@@ -13,7 +13,7 @@
 - `source venv/bin/activate` · `deactivate`
 
 ### 5. Установить зависимости:
-- `pip install -r requirements` или `pip3 install -r requirements`
+- `pip install -r requirements.txt` или `pip3 install -r requirements.txt`
 
 ### 6. Настроить переменные окружения:
 - `cp .env.example .env` (создание файла .env)
