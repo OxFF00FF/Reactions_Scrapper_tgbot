@@ -39,13 +39,14 @@ class EmotionsScrapperTelegramBot:
             await self.send_disallowed_message(event)
             return
 
-        user_id = sender.id
+        user_id = str(sender.id)
         user_name = sender.first_name if sender else 'Unknown'
         user_last_name = sender.last_name if sender else 'Unknown'
         message_text = event.message.message
 
         if event.is_private:
             logger.info(f"📩  ADD new message: {LIGHT_YELLOW}`{message_text}`{WHITE} FROM user: {user_name} {user_last_name} · {user_id}")
+            await self.bot.send_message(self.config['logs_group'], f"📩  New message: `{message_text}`\n🙍‍♂️  From: {user_name}\n🆔  {user_id}")
 
     async def get_messages(self, input_channel=None, total_count=None, start_date=None, end_date=None, offset_id=0, limit=100) -> list[dict]:
         total_messages = 0
