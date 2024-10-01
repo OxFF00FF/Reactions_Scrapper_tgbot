@@ -1,3 +1,5 @@
+import traceback
+
 from Bot.setup_logging import logger
 
 import os
@@ -40,9 +42,12 @@ def main(console=False):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Запуск main с опцией -c для console.")
-    parser.add_argument('-c', '--console', action='store_true', help="Запуск с console=True")
-    args = parser.parse_args()
+    try:
+        parser = argparse.ArgumentParser(description="Запуск main с опцией -c для console.")
+        parser.add_argument('-c', '--console', action='store_true', help="Запуск с console=True")
+        args = parser.parse_args()
 
-    main(console=args.console)
+        main(console=args.console)
 
+    except Exception as e:
+        logger.error(f"{e}\n{traceback.format_exc()}")
