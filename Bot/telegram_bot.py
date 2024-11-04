@@ -176,10 +176,12 @@ class EmotionsScrapperTelegramBot:
             start_date, end_date = get_start_end_date(7)
             logger.info(f"{YELLOW}ℹ️  Getting messages for period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
 
+            self.channel = event.message.text.split()[-1]
+
             channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
 
             data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages)
-            top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts, zero_target_emoji=False)
+            top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts)
 
             result = f'Топ сообщений за неделю\n{most_popular_posts(top_posts)}'
             await event.reply(result, link_preview=False)
@@ -205,10 +207,12 @@ class EmotionsScrapperTelegramBot:
             start_date, end_date = get_start_end_date(30)
             logger.info(f"{YELLOW}ℹ️  Getting messages for period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
 
+            self.channel = event.message.text.split()[-1]
+
             channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
 
             data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages)
-            top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts, zero_target_emoji=False)
+            top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts)
 
             result = f'Топ сообщений за месяц\n{most_popular_posts(top_posts)}'
             await event.reply(result, link_preview=False)
@@ -230,7 +234,7 @@ class EmotionsScrapperTelegramBot:
         loading_message = await self.bot.send_message(entity=user_id, message='⏳')
 
         async def _execute():
-            message = event.message.message.split('_')
+            message = event.message.message.split()[0].split('_')
 
             days = 1
             top_count = 5
@@ -261,10 +265,14 @@ class EmotionsScrapperTelegramBot:
             logger.info(f"{YELLOW}ℹ️  Getting messages for period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
             logger.info(f"{YELLOW}ℹ️  Sorting by: {emoji} · Top count: {top_count}")
 
+            self.channel = event.message.text.split()[-1]
+
             channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
 
             data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages, target_emoji=emoji)
-            top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts, target_emoji=emoji, zero_target_emoji=False)
+            top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts, target_emoji=emoji)
+
+            print(top_posts, emoji, top_count)
 
             result = f'Топ сообщений за {days} дней\n{most_popular_posts(top_posts, emoji, top_count)}'
             await event.reply(result, link_preview=False)
@@ -303,8 +311,7 @@ class EmotionsScrapperTelegramBot:
             logger.error(f"\n{RED}❌  Не удалось сохранить файл{WHITE}\n{e}\n")
 
         data, emoji_counts, target_emoji_counts = parse_messages(channel, channel_messages, target_emoji=emoji)
-        top_posts = sorting_by_emoji(channel, data, emoji_counts, target_emoji_counts,
-                                     target_emoji=emoji, zero_target_emoji=False)
+        top_posts = sorting_by_emoji(channel, data, emoji_counts, target_emoji_counts, target_emoji=emoji)
 
         if top_posts:
             print(f"\n{BOLD}Топ: {LIGHT_CYAN}{len(top_posts)}{WHITE} постов · По количеству эмоджи: {YELLOW}{emoji}{WHITE} · Всего постов: {LIGHT_MAGENTA}{len(data)}{RESET}")
@@ -316,7 +323,8 @@ class EmotionsScrapperTelegramBot:
         else:
             print(f"ℹ️  Не найдено постов с эмоджи: {YELLOW}{emoji}{WHITE} в указанном диапозоне дат или количестве")
 
-    async def send_disallowed_message(self, event: events.NewMessage.Event):
+    @staticmethod
+    async def send_disallowed_message(event: events.NewMessage.Event):
         """
         Sends the disallowed message to the user.
         """
@@ -335,9 +343,9 @@ class EmotionsScrapperTelegramBot:
             # Command handlers
             self.bot.add_event_handler(self.start_command, events.NewMessage(pattern=r'^/start$'))
             self.bot.add_event_handler(self.help_command, events.NewMessage(pattern=r'^/help$'))
-            self.bot.add_event_handler(self.top_week_command, events.NewMessage(pattern=r'^/top_week$'))
-            self.bot.add_event_handler(self.top_month_command, events.NewMessage(pattern=r'^/top_month$'))
-            self.bot.add_event_handler(self.top_for_command, events.NewMessage(pattern=r'^/topfor'))
+            self.bot.add_event_handler(self.top_week_command, events.NewMessage(pattern=r'^/top_week https://t.me/(.*?)$'))
+            self.bot.add_event_handler(self.top_month_command, events.NewMessage(pattern=r'^/top_month https://t.me/(.*?)$'))
+            self.bot.add_event_handler(self.top_for_command, events.NewMessage(pattern=r'^/topfor(?:_\d+)?(?:_\d+)?(?:_.)? https://t\.me/(.*?)$'))
 
 
             # Starting async tasks Client and Bot
