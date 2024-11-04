@@ -157,8 +157,8 @@ class EmotionsScrapperTelegramBot:
             "**emoji** - Выбранный эмоджи по которому сортируется топ (по умолчанию 👍)\n\n"
             "⚙️  __**Использование:**__\n"
             "/topfor_5 - Получит и отсортирует посты за 5 дней, по количеству 👍 и выведет первые 5\n\n"
-            "/topfor_7_10 - Получит отсортирует, посты за 7 дней, по количеству 👍 и выведет первые 10\n\n"
-            "/topfor_3_😂 - Получит отсортирует, посты за 3 дня, по количеству 😂 и выведет первые 5\n\n"
+            "/topfor_7_10 - Получит и отсортирует, посты за 7 дней, по количеству 👍 и выведет первые 10\n\n"
+            "/topfor_3_😂 - Получит и отсортирует, посты за 3 дня, по количеству 😂 и выведет первые 5\n\n"
             "/topfor_30_7_👎 - Получит и отсортирует посты за 30 дней, по количеству 👎 и выведет первые 7\n"
         )
 
@@ -246,9 +246,10 @@ class EmotionsScrapperTelegramBot:
                     days = int(message[1])
                 elif len(message) == 3:  # /topfor_<days>_<emoji>
                     days = int(message[1])
-                    emoji = message[2]
-                    if emoji.isdigit():
+                    if message[2].isdigit():
                         top_count = message[2]
+                    else:
+                        emoji = message[2]
                 elif len(message) == 4:  # /topfor_<days>_<top_count>_<emoji>
                     days = int(message[1])
                     top_count = int(message[2])
@@ -271,8 +272,6 @@ class EmotionsScrapperTelegramBot:
 
             data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages, target_emoji=emoji)
             top_posts = sorting_by_emoji(self.channel, data, emoji_counts, target_emoji_counts, target_emoji=emoji)
-
-            print(top_posts, emoji, top_count)
 
             result = f'Топ сообщений за {days} дней\n{most_popular_posts(top_posts, emoji, top_count)}'
             await event.reply(result, link_preview=False)
