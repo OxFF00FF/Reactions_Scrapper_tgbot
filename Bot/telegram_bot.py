@@ -147,11 +147,12 @@ class EmotionsScrapperTelegramBot:
             "⚙️  Доступные команды: \n\n"
             "·  /start - Приветсвтенное сообщение \n"
             "·  /help - Помощь \n"
-            "·  /top_week - Топ сообщений по количеству 👍 за неделю \n"
-            "·  /top_month - Топ сообщений по количеству 👍 за месяц \n"
-            "·  /topfor - Топ сообщений выбранный период и выбранному эмоджи\n\n"
+            "·  /top_week <url/id> - Топ сообщений по количеству 👍 за неделю \n"
+            "·  /top_month <url/id> - Топ сообщений по количеству 👍 за месяц \n"
+            "·  /topfor <url/id> - Топ сообщений выбранный период и выбранному эмоджи\n\n"
             "ℹ️  __**Как использовать команду topfor**__\n\n"
             "⚙️  **Синтаксис: `/topfor_<days>_<top_count>_<emoji>`**\n"
+            "**url/id** - Ссылка на канал в формате 'https://t.me/<channel>' или @<channel> \n"
             "**days** - Количество дней от текущей даты за которое будут получены сообщения (по умолчанию 1)\n"
             "**top_count** - Количество строчек в топе (по умолчанию 5)\n"
             "**emoji** - Выбранный эмоджи по которому сортируется топ (по умолчанию 👍)\n\n"
@@ -177,7 +178,6 @@ class EmotionsScrapperTelegramBot:
             logger.info(f"{YELLOW}ℹ️  Getting messages for period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
 
             self.channel = event.message.text.split()[-1]
-
             channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
 
             data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages)
@@ -208,7 +208,6 @@ class EmotionsScrapperTelegramBot:
             logger.info(f"{YELLOW}ℹ️  Getting messages for period: {LIGHT_MAGENTA}{start_date} - {end_date}{WHITE}")
 
             self.channel = event.message.text.split()[-1]
-
             channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
 
             data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages)
@@ -247,7 +246,7 @@ class EmotionsScrapperTelegramBot:
                 elif len(message) == 3:  # /topfor_<days>_<emoji>
                     days = int(message[1])
                     if message[2].isdigit():
-                        top_count = message[2]
+                        top_count = int(message[2])
                     else:
                         emoji = message[2]
                 elif len(message) == 4:  # /topfor_<days>_<top_count>_<emoji>
@@ -267,7 +266,6 @@ class EmotionsScrapperTelegramBot:
             logger.info(f"{YELLOW}ℹ️  Sorting by: {emoji} · Top count: {top_count}")
 
             self.channel = event.message.text.split()[-1]
-
             channel_messages = await self.get_messages(self.channel, start_date=start_date, end_date=end_date)
 
             data, emoji_counts, target_emoji_counts = parse_messages(self.channel, channel_messages, target_emoji=emoji)
@@ -342,9 +340,9 @@ class EmotionsScrapperTelegramBot:
             # Command handlers
             self.bot.add_event_handler(self.start_command, events.NewMessage(pattern=r'^/start$'))
             self.bot.add_event_handler(self.help_command, events.NewMessage(pattern=r'^/help$'))
-            self.bot.add_event_handler(self.top_week_command, events.NewMessage(pattern=r'^/top_week https://t.me/(.*?)$'))
-            self.bot.add_event_handler(self.top_month_command, events.NewMessage(pattern=r'^/top_month https://t.me/(.*?)$'))
-            self.bot.add_event_handler(self.top_for_command, events.NewMessage(pattern=r'^/topfor(?:_\d+)?(?:_\d+)?(?:_.)? https://t\.me/(.*?)$'))
+            self.bot.add_event_handler(self.top_week_command, events.NewMessage(pattern=r'^/top_week (https://t\.me/|@)(.*?)$'))
+            self.bot.add_event_handler(self.top_month_command, events.NewMessage(pattern=r'^/top_month (https://t\.me/|@)(.*?)$'))
+            self.bot.add_event_handler(self.top_for_command, events.NewMessage(pattern=r'^/topfor(?:_\d+)?(?:_\d+)?(?:_.)? (https://t\.me/|@)(.*?)$'))
 
 
             # Starting async tasks Client and Bot

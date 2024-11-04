@@ -91,8 +91,18 @@ def sorting_by_emoji(channel_url: str, data: list, emoji_counts: dict, target_em
 
 def most_popular_posts(posts, emoji: str = '👍', top_count=5) -> str:
     message = f"**По количеству** {emoji}\n\n"
-    for i in range(min(top_count, len(posts))):
-        message += f"{i + 1}️⃣  [Место]({posts[i]['url']}) · {posts[i]['target_emoji_count']}\n"
+    limit = min(top_count, len(posts))
+
+    urls = [
+        f"https://t.me/{post['url'].replace('@', '')}" if post['url'].startswith('@') else post['url']
+        for post in posts[:limit]
+    ]
+
+    message += "\n".join(
+        f"{i + 1}️⃣  [Место]({urls[i]}) · {posts[i]['target_emoji_count']}"
+        for i in range(limit)
+    )
+
     return message
 
 
